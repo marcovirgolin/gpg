@@ -1,0 +1,8 @@
+How to make an R library
+https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-libraries.pdf
+
+Interfacing using SWIG
+https://www.swig.org/Doc1.3/Python.html
+
+Install eigen
+conda install -c conda-forge eigen==3.4.0
