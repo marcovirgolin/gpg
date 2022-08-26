@@ -1,14 +1,11 @@
 #include <iostream>
-#include "nicknames.hpp"
+#include "myeig.hpp"
 #include "util.hpp"
 #include "evolution.hpp"
 #include "node.hpp"
 #include "tests.hpp"
 
-#include <Eigen/Dense>
-
-
-using namespace nnames;
+using namespace myeig;
 
 int main(int argc, char** argv){
   print("ciao",2);
@@ -19,8 +16,8 @@ int main(int argc, char** argv){
   auto t = Test();
   t.run_all();
 
-  mat a(2,2);
-  vec v = vec::Zero(10);
+  Mat a(2,2);
+  Vec v = Vec::Zero(10);
   print(v.transpose());
 
 }

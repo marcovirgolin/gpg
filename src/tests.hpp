@@ -4,6 +4,10 @@
 #include "util.hpp"
 #include "node.hpp"
 #include "operator.hpp"
+#include "myeig.hpp"
+
+using namespace std;
+using namespace myeig;
 
 struct Test {
 
@@ -49,14 +53,41 @@ struct Test {
   }
 
   void operators() {
+
+    // Generic ref
+    Op * op;
+
+    // Toy data
+    Mat X(3,2);
+    X << 1, 2,
+         3, 4,
+         5, 6;
+    Vec expected(3);
+    Vec result(3);
+
+    // Add
+    op = new Add();
+    assert(op->sym() == "+");
+    expected << 3, 7, 11;
+    result = op->apply(X);
+    assert(result.isApprox(expected));
+    delete op;
+
+    // Sub
+    op = new Sub();
+    print(op->sym());
+    expected << -1, -1, -1;
+    result = op->apply(X);
+    delete op;
+
+    // Neg
+    op = new Neg();
+    print(op->sym());
+    expected << -1, -3, -5;
+    result = op->apply(X.col(0));
+    delete op;
+
     
-    auto op = Add();
-    assert(op.sym == "+");
-    assert(op.apply(1,2) == 3);
-    
-    auto op2 = Sub();
-    assert(op2.sym == "-");
-    assert(op2.apply(2,3)==-1);
   }
 
 };
