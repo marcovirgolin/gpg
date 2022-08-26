@@ -25,9 +25,9 @@ struct Test {
     n3.parent = &n2;
     n2.parent = &n1;
 
-    assert(n1.get_depth() == 0);
-    assert(n2.get_depth() == 1);
-    assert(n3.get_depth() == 2);
+    assert(n1.depth() == 0);
+    assert(n2.depth() == 1);
+    assert(n3.depth() == 2);
   }
 
   void subtree() {
@@ -43,7 +43,7 @@ struct Test {
     n2.children.push_back(&n5);
     n1.children.push_back(&n4);
 
-    auto subtree = n1.get_subtree();
+    auto subtree = n1.subtree();
     string collected_fitnesses = "";
     for(Node * n : subtree) {
       collected_fitnesses += to_string((int)n->fitness);

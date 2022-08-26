@@ -10,6 +10,10 @@ struct Op {
 
   virtual ~Op(){};
 
+  virtual Op * clone() {
+    throw runtime_error("Not implemented");  
+  }
+
   virtual int arity() {
     throw runtime_error("Not implemented");
   }
@@ -25,6 +29,10 @@ struct Op {
 };
 
 struct Add : Op {
+
+  Op * clone() override {
+    return new Add();
+  }
 
   int arity() override {
     return 2;
@@ -42,6 +50,10 @@ struct Add : Op {
 
 struct Neg : Op {
 
+  Op * clone() override {
+    return new Neg();
+  }
+
   int arity() override {
     return 1;
   }
@@ -57,6 +69,10 @@ struct Neg : Op {
 };
 
 struct Sub : Op {
+
+  Op * clone() override {
+    return new Sub();
+  }
 
   int arity() override {
     return 2;
