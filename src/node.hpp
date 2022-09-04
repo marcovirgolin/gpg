@@ -10,8 +10,19 @@ struct Node {
 
   Node * parent = NULL;
   vector<Node*> children;
-  Op * op;
+  Op * op = NULL;
   float fitness;
+
+  //Node() {};
+
+  Node(Op * op) {
+    this->op = op;
+  }
+
+  virtual ~Node() noexcept(false) {
+    if (op)
+      delete op;
+  }
 
   void clear() {
     auto nodes = subtree();
@@ -22,9 +33,8 @@ struct Node {
   }
 
   Node * clone() {
-    Node * new_node = new Node();
+    Node * new_node = new Node(this->op->clone());
     new_node->fitness = this->fitness;
-    new_node->op = this->op->clone();
     for(Node * c : this->children) {
       Node * new_c = c->clone();
       new_node->append(new_c);
@@ -92,7 +102,7 @@ struct Node {
 
     for (int i = 0; i < op->arity(); i++)
       children[i]->_height_recursive(max_child_depth);
-}
+  }
 
   vector<Node*> subtree() {
     vector<Node*> subtree;
@@ -133,6 +143,20 @@ struct Node {
       p = n->parent;
     }
     return false;
+  }
+
+  Vec get_output(Mat & X) {
+
+    int a = op->arity();
+    if (a == 0)
+      return op->apply(X);
+
+    Mat C(X.rows(), a);
+    for(int i = 0; i < a; i++)
+      C.col(i) = children[i]->get_output(X);
+
+    return op->apply(C);
+
   }
 
 };
