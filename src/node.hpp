@@ -74,7 +74,6 @@ struct Node {
     c->parent = this;
   }
 
-
   int depth() {
     int depth = 0;
     auto * curr = this;
@@ -109,7 +108,6 @@ struct Node {
     subtree.reserve(64);
     _subtree_recursive(subtree);
     return subtree;
-    
   }
 
   void _subtree_recursive(vector<Node*> &subtree) {
@@ -146,7 +144,6 @@ struct Node {
   }
 
   Vec get_output(Mat & X) {
-
     int a = op->arity();
     if (a == 0)
       return op->apply(X);
@@ -156,7 +153,17 @@ struct Node {
       C.col(i) = children[i]->get_output(X);
 
     return op->apply(C);
+  }
 
+  void print_subtree() {
+    vector<Node*> nodes = this->subtree();
+    string str = "[";
+    for(Node * n : nodes) {
+      str += n->op->sym() + ", ";
+    }
+    str.erase(str.end()-2, str.end());
+    str += "]";
+    print(str);
   }
 
 };

@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <iostream>
+#include <random>
 #include "myeig.hpp"
 
 using namespace std;
@@ -12,7 +13,6 @@ void print(Args... args)
 {
   (cout << ... << args) << "\n";
 }
-
 
 float corr(Vec x, Vec y) {
   float mean_x = x.mean();
@@ -30,6 +30,10 @@ float corr(Vec x, Vec y) {
   float result = denominator != 0 ? numerator / denominator : 0;
 
   return result;
+}
+
+float randu() {
+  return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
 #endif

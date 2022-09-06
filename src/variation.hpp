@@ -4,8 +4,9 @@
 #include "globals.hpp"
 #include "node.hpp"
 #include "operator.hpp"
+#include "util.hpp"
+
 #include <vector>
-#include <random>
 
 using namespace std;
 
@@ -14,22 +15,22 @@ Node * _grow_tree_recursive(vector<Op*> functions, vector<Op*> terminals, int ma
   Node * n = NULL;
 
   if (max_depth_left > 0) {
-
-    if (actual_depth_left > 0 && rand() < terminal_prob) {
-      n = new Node(functions[rand() * functions.size()]->clone());
+    if (actual_depth_left > 0 && randu() < 1-terminal_prob) {
+      n = new Node(functions[randu() * functions.size()]->clone());
     } else {
-      n = new Node(terminals[rand() & terminals.size()]->clone());
+      n = new Node(terminals[randu() * terminals.size()]->clone());
     }
 
-    for (size_t i = 0; i < max_arity; i++) {
+    for (int i = 0; i < max_arity; i++) {
       Node * c = _grow_tree_recursive(functions, terminals, max_arity,
-        max_depth_left - 1, actual_depth_left - 1, curr_depth + 1);
+        max_depth_left - 1, actual_depth_left - 1, curr_depth + 1, terminal_prob);
       n->append(c);
     }
-
   } else {
-    n = new Node(terminals[rand()*terminals.size()]->clone());
+    n = new Node(terminals[randu() * terminals.size()]->clone());
   }
+
+  assert(n != NULL);
 
   return n;
 }
@@ -48,9 +49,9 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
 
   if (init_type == "rhh" || init_type == "hh") {
     if (init_type == "rhh")
-      max_depth = rand() * max_depth;
+      max_depth = randu() * max_depth;
     
-    bool is_full = rand() < .5;
+    bool is_full = randu() < .5;
 
     if (is_full)
       tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, max_depth, -1, 0.0);

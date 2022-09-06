@@ -83,8 +83,14 @@ struct Test {
   void gen_tree() {
     vector<Op*> functions = {new Add(), new Sub(), new Mul()};
     vector<Op*> terminals = {new Feat(0), new Feat(1)};
-    print("almost");
-    auto * t = generate_tree(functions, terminals, 4, "hh");
+    for(int height = 10; height >= 0; height--){
+      // create full trees, check their height is correct
+      for(int trial=0; trial < 10; trial++){
+        auto * t = _grow_tree_recursive(functions, terminals, 2, height, height, -1, 0.0);
+        assert(t->height() == height);
+        t->clear();
+      }
+    }
   }
 
   void operators() {
