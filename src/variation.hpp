@@ -67,4 +67,16 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
   return tree;
 }
 
+Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos) {
+  Node * offspring = parent->clone();
+  for(auto & crossover_mask : fos) {
+    // fetch donor
+    Node * donor = population[randu()*population.size()];
+    
+  }
+  return offspring;
+}
+
+
+
 #endif

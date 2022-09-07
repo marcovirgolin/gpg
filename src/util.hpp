@@ -49,4 +49,26 @@ float tock(chrono::time_point<Clock> tick) {
   return chrono::duration_cast<chrono::milliseconds>(duration).count() / 1000.0;
 }
 
+template<typename T>
+vector<int> argsort(const vector<T> &array) {
+  // credit: https://gist.github.com/HViktorTsoi/58eabb4f7c5a303ced400bcfa816f6f5
+  vector<int> indices(array.size());
+  iota(indices.begin(), indices.end(), 0);
+  sort(indices.begin(), indices.end(),
+      [&array](int left, int right) -> bool {
+        // sort indices according to corresponding array element
+        return array[left] < array[right];
+      });
+  return indices;
+}
+
+vector<int> rand_perm(int num_elements) {
+  vector<float> rand_vec;
+  rand_vec.reserve(num_elements);
+  for(int i = 0; i < num_elements; i++) {
+    rand_vec.push_back(randu());
+  }
+  return argsort(rand_vec);
+}
+
 #endif

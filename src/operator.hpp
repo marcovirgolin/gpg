@@ -6,6 +6,10 @@
 using namespace std;
 using namespace myeig;
 
+enum OpType {
+  otFun, otFeat, otConst
+};
+
 struct Op {
 
   virtual ~Op(){};
@@ -22,13 +26,23 @@ struct Op {
     throw runtime_error("Not implemented");
   }
 
+  virtual OpType type() {
+    throw runtime_error("Not implemented");
+  }
+
   virtual Vec apply(Mat & X) {
     throw runtime_error("Not implemented");
   }
 
 };
 
-struct Add : Op {
+struct Fun : Op {
+  OpType type() override {
+    return OpType::otFun;
+  }
+};
+
+struct Add : Fun {
 
   Op * clone() override {
     return new Add();
@@ -48,7 +62,7 @@ struct Add : Op {
 
 };
 
-struct Neg : Op {
+struct Neg : Fun {
 
   Op * clone() override {
     return new Neg();
@@ -68,7 +82,7 @@ struct Neg : Op {
 
 };
 
-struct Sub : Op {
+struct Sub : Fun {
 
   Op * clone() override {
     return new Sub();
@@ -88,7 +102,7 @@ struct Sub : Op {
 
 };
 
-struct Mul : Op {
+struct Mul : Fun {
 
   Op * clone() override {
     return new Mul();
@@ -108,7 +122,7 @@ struct Mul : Op {
 
 };
 
-struct Inv : Op {
+struct Inv : Fun {
 
   Op * clone() override {
     return new Inv();
@@ -128,7 +142,7 @@ struct Inv : Op {
 
 };
 
-struct Div : Op {
+struct Div : Fun {
 
   Op * clone() override {
     return new Div();
@@ -167,8 +181,42 @@ struct Feat : Op {
     return "x_"+to_string(id);
   }
 
+  OpType type() override {
+    return OpType::otFeat;
+  }
+
   Vec apply(Mat & X) override {
     return X.col(id);
+  }
+
+};
+
+struct Const : Op {
+
+  float c;
+  Const(float c=NAN) {
+    this->c=NAN;
+  }
+
+  Op * clone() override {
+    return new Const(this->c);
+  }
+
+  int arity() override {
+    return 0;
+  }
+
+  string sym() override {
+    return to_string(c);
+  }
+
+  OpType type() override {
+    return OpType::otConst;
+  }
+
+  Vec apply(Mat & X) override {
+    Vec c_vec = Vec::Constant(X.rows(), c);
+    return c_vec;
   }
 
 };
