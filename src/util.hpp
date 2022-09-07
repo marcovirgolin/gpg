@@ -3,10 +3,13 @@
 
 #include <iostream>
 #include <random>
+#include <chrono>
 #include "myeig.hpp"
 
 using namespace std;
 using namespace myeig;
+
+typedef std::chrono::steady_clock Clock;
 
 template<class... Args>
 void print(Args... args)
@@ -34,6 +37,16 @@ float corr(Vec x, Vec y) {
 
 float randu() {
   return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+}
+
+auto tick() {
+  return Clock::now();
+}
+
+float tock(chrono::time_point<Clock> tick) {
+  auto now = Clock::now();
+  auto duration = now - tick;
+  return chrono::duration_cast<chrono::milliseconds>(duration).count() / 1000.0;
 }
 
 #endif

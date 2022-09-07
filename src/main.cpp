@@ -12,11 +12,13 @@ using namespace myeig;
 int main(int argc, char** argv){
 
   g::set_options();
-
-  //auto evo = Evolution();
-  //evo.run();
-
+  
   auto t = Test();
   t.run_all();
 
+  auto evo = Evolution();
+  evo.run();
+
+
+  g::clear_globals();
 }

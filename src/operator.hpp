@@ -22,7 +22,7 @@ struct Op {
     throw runtime_error("Not implemented");
   }
 
-  virtual Vec apply(Mat X) {
+  virtual Vec apply(Mat & X) {
     throw runtime_error("Not implemented");
   }
 
@@ -42,7 +42,7 @@ struct Add : Op {
     return "+";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return X.rowwise().sum();
   }
 
@@ -62,7 +62,7 @@ struct Neg : Op {
     return "¬";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return -X.col(0);
   }
 
@@ -82,7 +82,7 @@ struct Sub : Op {
     return "-";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return X.col(0)-X.col(1);
   }
 
@@ -102,7 +102,7 @@ struct Mul : Op {
     return "*";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return X.col(0)*X.col(1);
   }
 
@@ -122,7 +122,7 @@ struct Inv : Op {
     return "1/";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return 1/X.col(0);
   }
 
@@ -142,7 +142,7 @@ struct Div : Op {
     return "/";
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return X.col(0)/X.col(1);
   }
 
@@ -167,7 +167,7 @@ struct Feat : Op {
     return "x_"+to_string(id);
   }
 
-  Vec apply(Mat X) override {
+  Vec apply(Mat & X) override {
     return X.col(id);
   }
 

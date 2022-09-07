@@ -123,7 +123,8 @@ struct Test {
     // Neg
     op = new Neg();
     expected << -1, -3, -5;
-    result = op->apply(X.col(0));
+    Mat temp = X.col(0);
+    result = op->apply(temp);
     delete op;
     
   }
@@ -138,14 +139,11 @@ struct Test {
     Vec result(3);
 
     Node * mock_tree = _generate_mock_tree();
-
     expected << 4, 24, 60;
     result = mock_tree->get_output(X);
-
     mock_tree->clear();
 
     assert(result.isApprox(expected));
-
   }
 
   void fitness() {

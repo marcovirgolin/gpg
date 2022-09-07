@@ -15,7 +15,7 @@ Node * _grow_tree_recursive(vector<Op*> functions, vector<Op*> terminals, int ma
   Node * n = NULL;
 
   if (max_depth_left > 0) {
-    if (actual_depth_left > 0 && randu() < 1-terminal_prob) {
+    if (actual_depth_left > 0 && randu() < 1.0-terminal_prob) {
       n = new Node(functions[randu() * functions.size()]->clone());
     } else {
       n = new Node(terminals[randu() * terminals.size()]->clone());

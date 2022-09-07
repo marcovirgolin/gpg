@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "operator.hpp"
+#include "util.hpp"
 
 using namespace std;
 
