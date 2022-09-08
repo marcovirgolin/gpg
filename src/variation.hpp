@@ -67,13 +67,151 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
   return tree;
 }
 
-Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos) {
+Node * coeff_mut(Node * parent, float cmut_prob=1.0, float cmut_temp=0.1, bool return_copy=true) {
+  Node * tree = parent;
+  if (return_copy) {
+    tree = parent->clone();
+  }
+  
+  if (cmut_prob > 0 && cmut_temp > 0) {
+    // apply coeff mut to all nodes that are constants
+    vector<Node*> nodes = tree->subtree();
+    for(Node * n : nodes) {
+      if (
+        n->op->type() == OpType::otConst &&
+        randu() < cmut_prob
+        ) {
+
+        float c = ((Const*)n->op)->c;
+        float std = cmut_temp*abs(c);
+        if (std < g::cmut_eps)
+          std = g::cmut_eps;
+        float mutated_c = c * randn()*std; 
+        ((Const*)n->op)->c = mutated_c;
+
+      }
+    }
+  }
+
+  return tree;
+}
+
+Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=1.0, float cmut_temp=0.1) {
   Node * offspring = parent->clone();
-  for(auto & crossover_mask : fos) {
+  Node * backup = parent->clone();
+
+  float backup_fitness = backup->fitness;
+
+  vector<Node*> offspring_nodes = offspring->subtree();
+
+  auto random_fos_order = rand_perm(fos.size());
+
+  for(int i = 0; i < fos.size(); i++) {
+    auto crossover_mask = fos[random_fos_order[i]];
     // fetch donor
     Node * donor = population[randu()*population.size()];
+    vector<Node*> donor_nodes = donor->subtree();
+
+    for(int & idx : crossover_mask) {
+      delete offspring_nodes[idx]->op;
+      offspring_nodes[idx]->op = donor_nodes[idx]->op->clone();
+    }
+
+    // apply coeff mut
+    coeff_mut(offspring, cmut_prob, cmut_temp, false);
+
+    // check is not worse
+    float new_fitness = fit_func.get_fitness(offspring);
+    if (new_fitness > backup_fitness) {
+      // undo
+      offspring->clear();
+      offspring = backup->clone();
+      offspring_nodes = offspring->subtree();
+    } else {
+      // retain
+      backup->clear();
+      backup = offspring->clone();
+      backup_fitness = new_fitness;
+    }
+  }
+  
+  return offspring;
+}
+
+Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=0.5, float cmut_temp=0.1) {
+  Node * offspring = parent->clone();
+  float backup_fitness = parent->fitness;
+  vector<Node*> offspring_nodes = offspring->subtree();
+
+  auto random_fos_order = rand_perm(fos.size());
+
+  for(int fos_idx = 0; fos_idx < fos.size(); fos_idx++) {
+    
+    auto crossover_mask = fos[random_fos_order[fos_idx]];
+    bool change_is_meaningful = false;
+    vector<Op*> backup_ops; backup_ops.reserve(crossover_mask.size());
+    vector<int> effectively_changed_indices; effectively_changed_indices.reserve(crossover_mask.size());
+
+    Node * donor = population[randu()*population.size()];
+    vector<Node*> donor_nodes = donor->subtree();
+
+    for(int & idx : crossover_mask) {
+      // check if swap is not necessary
+      if (offspring_nodes[idx]->op->sym() == donor_nodes[idx]->op->sym()) {
+        // might need to swap if the node is a constant that might be optimized
+        if (cmut_prob <= 0 || cmut_temp == 0 || donor_nodes[idx]->op->type() != OpType::otConst)
+          continue;
+      }
+
+      // then execute the swap
+      Op * replaced_op = offspring_nodes[idx]->op;
+      offspring_nodes[idx]->op = donor_nodes[idx]->op->clone();
+      backup_ops.push_back(replaced_op);
+      effectively_changed_indices.push_back(idx);
+    }
+
+    // apply coeff mut
+    coeff_mut(offspring, cmut_prob, cmut_temp, false);
+
+    // check if at least one change was meaningful
+    for(int i : effectively_changed_indices) {
+      Node * n = offspring_nodes[i];
+      if (!n->is_intron()) {
+        change_is_meaningful = true;
+        break;
+      }
+    }
+
+    // assume nothing changed
+    float new_fitness = backup_fitness;
+    if (change_is_meaningful) {
+      // gotta recompute
+      new_fitness = fit_func.get_fitness(offspring);
+    }
+
+    // check is not worse
+    if (new_fitness > backup_fitness) {
+      // undo
+      for(int i = 0; i < effectively_changed_indices.size(); i++) {
+        int changed_idx = effectively_changed_indices[i];
+        Node * off_n = offspring_nodes[changed_idx];
+        Op * back_op = backup_ops[i];
+        delete off_n->op;
+        off_n->op = back_op->clone();
+        offspring->fitness = backup_fitness;
+      }
+    } else {
+      // retain
+      backup_fitness = new_fitness;
+    }
+
+    // discard backup
+    for(Op * op : backup_ops) {
+      delete op;
+    }
     
   }
+  
   return offspring;
 }
 

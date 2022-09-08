@@ -11,6 +11,14 @@ using namespace myeig;
 
 typedef std::chrono::steady_clock Clock;
 
+template<typename T>
+void print(vector<T> & v) {
+  for (auto & el : v) {
+    cout << el << " ";
+  }
+  cout << endl;
+}
+
 template<class... Args>
 void print(Args... args)
 {
@@ -35,8 +43,25 @@ float corr(Vec x, Vec y) {
   return result;
 }
 
+float roundd(float x, int num_dec) {
+  return round(x * num_dec) / (float) num_dec;
+}
+
 float randu() {
   return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+}
+
+
+float randn() {
+  // Marsiglia algorithm
+  float x, y, rsq;
+  do {
+    x = 2.0 * randu() - 1.0;
+    y = 2.0 * randu() - 1.0;
+    rsq = x * x + y * y;
+  } while( rsq >= 1. || rsq == 0. );
+  float f = sqrt( -2.0 * log(rsq) / rsq );
+  return x * f;
 }
 
 auto tick() {
@@ -69,6 +94,12 @@ vector<int> rand_perm(int num_elements) {
     rand_vec.push_back(randu());
   }
   return argsort(rand_vec);
+}
+
+void replace(Vec & x, float what, float with) {
+  for(int i = 0; i < x.size(); i++)
+    if (x[i] == what)
+      x[i] = with;
 }
 
 #endif

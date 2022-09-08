@@ -2,6 +2,7 @@
 #define OPERATOR_H
 
 #include "myeig.hpp"
+#include "util.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -137,7 +138,10 @@ struct Inv : Fun {
   }
 
   Vec apply(Mat & X) override {
-    return 1/X.col(0);
+    // division by 0 is undefined thus conver to NAN
+    Vec denom = X.col(0);
+    replace(denom, 0, NAN);
+    return 1/denom;
   }
 
 };
@@ -157,7 +161,10 @@ struct Div : Fun {
   }
 
   Vec apply(Mat & X) override {
-    return X.col(0)/X.col(1);
+    // division by 0 is undefined thus conver to NAN
+    Vec denom = X.col(1);
+    replace(denom, 0, NAN);
+    return X.col(0)/denom;
   }
 
 };
@@ -202,11 +209,17 @@ struct Const : Op {
     return new Const(this->c);
   }
 
+  void _sample() {
+    this->c = randu()*10 - 5;
+  }
+
   int arity() override {
     return 0;
   }
 
   string sym() override {
+    if (isnan(c))
+      _sample();
     return to_string(c);
   }
 
@@ -215,6 +228,8 @@ struct Const : Op {
   }
 
   Vec apply(Mat & X) override {
+    if (isnan(c))
+      _sample();
     Vec c_vec = Vec::Constant(X.rows(), c);
     return c_vec;
   }

@@ -99,9 +99,16 @@ struct AbsCorrFitness : Fitness {
   float get_fitness(Node * n, Mat & X, Vec & y) override {
     Vec out = n->get_output(X);
 
-    float fitness = abs(corr(y, out));
+    float fitness = 1.0-abs(corr(y, out));
     if (isnan(fitness))
       fitness = INF;
+    print(fitness);
+    if (fitness < 0) {
+      print(abs(corr(y, out)));
+      print(y);
+      print(out);
+    }
+    assert(fitness >= 0);
     n->fitness = fitness;
 
     return fitness;

@@ -16,9 +16,11 @@ int main(int argc, char** argv){
   auto t = Test();
   t.run_all();
 
+  auto start_time = tick();
   auto evo = Evolution();
   evo.run();
-
+  print("Runtime: ",tock(start_time),"s");
 
   g::clear_globals();
+
 }

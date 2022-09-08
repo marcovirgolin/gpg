@@ -37,7 +37,10 @@ struct FOSBuilder
       MI = compute_MI(discr_pop, num_symbs, num_random_variables);
     }
 
-    vector<vector<int>> fos;
+    vector<vector<int>> fos = fast_upgma(MI);
+    // remove the root to avoid complete replacements
+    fos.pop_back();
+
     return fos;
   }
 
@@ -188,6 +191,7 @@ struct FOSBuilder
     // register bias to account for non-uniform distribution of symbols in initialized GP population
     if (first_time)
     {
+      B = Mat::Zero(num_random_variables, num_random_variables);
       for (int i = 0; i < num_random_variables; i++)
       {
         B(i, i) = 1.0 / MI(i, i);
@@ -214,11 +218,10 @@ struct FOSBuilder
     {
       for (int j = i + 1; j < num_random_variables; j++)
       {
-        MI(i, j) = MI(i, i) + MI(j, j) - MI(i, j);
+        MI(i, j) = roundd(MI(i, i) + MI(j, j) - MI(i, j), 5);
         MI(j, i) = MI(i, j);
       }
     }
-
     return MI;
   }
 
@@ -255,7 +258,7 @@ struct FOSBuilder
     }
 
     // Rearrange similarity matrix based on random order of MPM
-    Mat Sprime(num_entries, num_entries);
+    Mat Sprime(mpm_length, mpm_length);
     for (int i = 0; i < mpm_length; i++)
       for (int j = 0; j < mpm_length; j++)
         Sprime(i, j) = S(mpm[i][0], mpm[j][0]);
@@ -394,7 +397,6 @@ struct FOSBuilder
       if (((S(index, i) > S(index, result)) || ((S(index, i) == S(index, result)) && (mpm_number_of_indices[i] < mpm_number_of_indices[result]))) && (i != index))
         result = i;
     }
-
     return result;
   }
 };

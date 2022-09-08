@@ -19,9 +19,7 @@ struct Evolution {
   }
 
   ~Evolution() {
-    for(auto * t : population) {
-      t->clear();
-    }
+    clear_population(population);
     if (elite)
       elite->clear();
     if (fb)
@@ -42,11 +40,18 @@ struct Evolution {
     return false;
   }
 
+  void clear_population(vector<Node*> & population) {
+    for(auto * tree : population) {
+      tree->clear();
+    }
+    population.clear();
+  }
+
   void init_pop() {
     population.reserve(g::pop_size);
     for(int i = 0; i < g::pop_size; i++) {
       auto * tree = generate_tree(g::functions, g::terminals, g::max_depth, g::init_strategy);
-      g::fitness->get_fitness(tree);
+      g::fit_func->get_fitness(tree);
       check_n_set_elite(tree);
       population.push_back(tree);
     }
@@ -55,6 +60,20 @@ struct Evolution {
   void generation() {
     // build linkage tree fos
     auto fos = fb->build_linkage_tree(population);
+
+    // perform GOM
+    vector<Node*> offspring_population; 
+    offspring_population.reserve(g::pop_size);
+    for(int i = 0; i < g::pop_size; i++) {
+      auto * offspring = efficient_gom(population[i], population, fos, *g::fit_func);
+      check_n_set_elite(offspring);
+      offspring_population.push_back(offspring);
+    }
+
+    // replace parent with offspring population
+    clear_population(population);
+    population = offspring_population;
+
     print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
   }
 
@@ -64,6 +83,8 @@ struct Evolution {
     for(int i = 0; i < g::max_generations; i++) {
       generation();
     }
+
+    elite->print_subtree();
 
   }
 
