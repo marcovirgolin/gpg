@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include "node.hpp"
 #include "variation.hpp"
+#include "selection.hpp"
 #include "fos.hpp"
 #include "globals.hpp"
 
@@ -57,7 +58,7 @@ struct Evolution {
     }
   } 
 
-  void generation() {
+  void gomea_generation() {
     // build linkage tree fos
     auto fos = fb->build_linkage_tree(population);
 
@@ -73,15 +74,39 @@ struct Evolution {
     // replace parent with offspring population
     clear_population(population);
     population = offspring_population;
+  }
 
-    print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
+  void ga_generation() {
+    vector<Node*> offspring_population; 
+    offspring_population.reserve(g::pop_size);
+    for(int i = 0; i < g::pop_size; i++) {
+      auto * cr_offspring = crossover(population[i], population[randu()*population.size()]);
+      auto * mut_offspring = mutation(cr_offspring, g::functions, g::terminals, 0.75);
+      cr_offspring->clear();
+      mut_offspring = coeff_mut(mut_offspring, 1.0, 0.01, false);
+      // compute fitness
+      g::fit_func->get_fitness(mut_offspring);
+      check_n_set_elite(mut_offspring);
+      // add to off pop
+      offspring_population.push_back(mut_offspring);
+    }
+    
+
+    // selection
+    auto selection = popwise_tournament(offspring_population, g::pop_size, g::tournament_size, g::tournament_stochastic);
+    
+    // clean up
+    clear_population(population);
+    clear_population(offspring_population);
+    population = selection;
   }
 
   void run() {
     init_pop();
 
     for(int i = 0; i < g::max_generations; i++) {
-      generation();
+      gomea_generation();
+      print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
     }
 
     elite->print_subtree();

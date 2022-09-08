@@ -96,6 +96,49 @@ Node * coeff_mut(Node * parent, float cmut_prob=1.0, float cmut_temp=0.1, bool r
   return tree;
 }
 
+vector<int> _sample_crossover_mask(int num_nodes) {
+  auto crossover_mask = rand_perm(num_nodes);
+  int k = 1+sqrt(num_nodes)*abs(randn());
+  k = min(k, num_nodes);
+  crossover_mask.erase(crossover_mask.begin() + k, crossover_mask.end());
+  assert(crossover_mask.size() == k);
+  return crossover_mask;
+}
+
+Node * crossover(Node * parent, Node * donor) {
+  Node * offspring = parent->clone();
+  auto nodes = offspring->subtree();
+  auto d_nodes = donor->subtree();
+
+  // sample a crossover mask
+  auto crossover_mask = _sample_crossover_mask(nodes.size());
+  for(int i : crossover_mask) {
+    delete nodes[i]->op;
+    nodes[i]->op = d_nodes[i]->op->clone();
+  }
+
+  return offspring;
+}
+
+Node * mutation(Node * parent, vector<Op*> & functions, vector<Op*> & terminals, float prob_fun = 0.75) {
+  Node * offspring = parent->clone();
+  auto nodes = offspring->subtree();
+
+  // sample a crossover mask
+  auto crossover_mask = _sample_crossover_mask(nodes.size());
+  for(int i : crossover_mask) {
+    delete nodes[i]->op;
+    if (nodes[i]->children.size() > 0 && randu() < prob_fun) {
+      nodes[i]->op = functions[randu()*functions.size()]->clone();
+    }
+    else {
+      nodes[i]->op = terminals[randu()*terminals.size()]->clone();
+    }
+  }
+
+  return offspring;
+}
+
 Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=1.0, float cmut_temp=0.1) {
   Node * offspring = parent->clone();
   Node * backup = parent->clone();
@@ -137,6 +180,7 @@ Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos,
   
   return offspring;
 }
+
 
 Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=0.5, float cmut_temp=0.1) {
   Node * offspring = parent->clone();
@@ -209,7 +253,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     for(Op * op : backup_ops) {
       delete op;
     }
-    
+
   }
   
   return offspring;

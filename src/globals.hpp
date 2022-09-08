@@ -20,7 +20,7 @@ int pop_size = 100;
 
 // representation
 int max_depth = 4;
-string init_strategy = "hh";
+string init_strategy = "rhh";
 vector<Op*> functions;
 vector<Op*> terminals;
 
@@ -35,12 +35,16 @@ Fitness * fit_func = NULL;
 // variation
 float cmut_eps = 1e-5;
 
+// selection
+int tournament_size = 10;
+bool tournament_stochastic = false;
+
 
 // Random stuff
 
 void set_options() {
   pop_size = 1000;
-  max_generations = 100;
+  max_generations = 1000;
   seed = 42;
   srand((unsigned int) seed);
 

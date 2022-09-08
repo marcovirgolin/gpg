@@ -70,7 +70,7 @@ struct MAEFitness : Fitness {
     Vec out = n->get_output(X);
 
     float fitness = (y - out).abs().mean();
-    if (isnan(fitness))
+    if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
     n->fitness = fitness;
 
@@ -85,7 +85,7 @@ struct MSEFitness : Fitness {
     Vec out = n->get_output(X);
 
     float fitness = (y-out).square().mean();
-    if (isnan(fitness))
+    if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
     n->fitness = fitness;
 
@@ -100,15 +100,8 @@ struct AbsCorrFitness : Fitness {
     Vec out = n->get_output(X);
 
     float fitness = 1.0-abs(corr(y, out));
-    if (isnan(fitness))
+    if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
-    print(fitness);
-    if (fitness < 0) {
-      print(abs(corr(y, out)));
-      print(y);
-      print(out);
-    }
-    assert(fitness >= 0);
     n->fitness = fitness;
 
     return fitness;
