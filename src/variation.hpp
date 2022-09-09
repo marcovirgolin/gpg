@@ -46,17 +46,18 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
   }
 
   Node * tree = NULL;
+  int actual_depth = max_depth;
 
   if (init_type == "rhh" || init_type == "hh") {
     if (init_type == "rhh")
-      max_depth = randu() * max_depth;
+      actual_depth = randu() * max_depth;
     
     bool is_full = randu() < .5;
 
     if (is_full)
-      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, max_depth, -1, 0.0);
+      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, actual_depth, -1, 0.0);
     else
-      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, max_depth, -1);
+      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, actual_depth, -1);
 
   } else {
     throw runtime_error("Unrecognized init_type "+init_type);

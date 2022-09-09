@@ -27,6 +27,24 @@ struct Evolution {
       delete fb;
   }
 
+  bool converged(vector<Node*> & population, bool ignore_constants=false) {
+    auto rp = rand_perm(population.size());
+    auto nodes_first = population[rp[0]]->subtree();
+    for(int i = 1; i < population.size(); i++) {
+      auto nodes_i = population[rp[i]]->subtree();
+      for(int j = 0; j < nodes_first.size(); j++) {
+        if (ignore_constants && 
+          nodes_first[j]->op->type() == OpType::otConst && 
+          nodes_i[j]->op->type() == OpType::otConst)
+          continue;
+        if (nodes_first[j]->op->sym() != nodes_i[j]->op->sym()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   bool check_n_set_elite(Node * tree) {
     if (!elite) {
       elite = tree->clone();
@@ -107,6 +125,10 @@ struct Evolution {
     for(int i = 0; i < g::max_generations; i++) {
       gomea_generation();
       print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
+      if (converged(population, true)) {
+        print("population converged");
+        break;
+      }
     }
 
     elite->print_subtree();
