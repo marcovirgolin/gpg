@@ -3,6 +3,11 @@ https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-libraries.pdf
 
 Interfacing using SWIG
 https://www.swig.org/Doc1.3/Python.html
+https://cmake.org/cmake/help/latest/module/UseSWIG.html <- maybe CMAKE can do this already for us :)
 
 Install eigen
 conda install -c conda-forge eigen==3.4.0
+
+Install swig
+conda install swig
+

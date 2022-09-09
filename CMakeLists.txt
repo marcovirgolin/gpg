@@ -33,8 +33,8 @@ endif()
 
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(${PROJECT_NAME} src/main.cpp )
-add_library(py${PROJECT_NAME} src/pyface.cpp)
-add_library(R${PROJECT_NAME} src/Rface.cpp)
+#add_library(py${PROJECT_NAME} src/pyface.hpp)
+#add_library(R${PROJECT_NAME} src/Rface.cpp)
 
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)

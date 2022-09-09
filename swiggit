@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd src/swig/python
+swig -python -c++ pyface.i
+python setup.py build_ext --inplace
