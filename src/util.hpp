@@ -47,8 +47,8 @@ float roundd(float x, int num_dec) {
   return round(x * num_dec) / (float) num_dec;
 }
 
-float randu() {
-  return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+double randu() {
+  return (double) rand() / (double) (RAND_MAX + 1.0);
 }
 
 

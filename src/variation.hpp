@@ -68,23 +68,23 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
   return tree;
 }
 
-Node * coeff_mut(Node * parent, float cmut_prob=1.0, float cmut_temp=0.1, bool return_copy=true) {
+Node * coeff_mut(Node * parent, bool return_copy=true) {
   Node * tree = parent;
   if (return_copy) {
     tree = parent->clone();
   }
   
-  if (cmut_prob > 0 && cmut_temp > 0) {
+  if (g::cmut_prob > 0 && g::cmut_temp > 0) {
     // apply coeff mut to all nodes that are constants
     vector<Node*> nodes = tree->subtree();
     for(Node * n : nodes) {
       if (
         n->op->type() == OpType::otConst &&
-        randu() < cmut_prob
+        randu() < g::cmut_prob
         ) {
 
         float c = ((Const*)n->op)->c;
-        float std = cmut_temp*abs(c);
+        float std = g::cmut_temp*abs(c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
         float mutated_c = c * randn()*std; 
@@ -140,7 +140,7 @@ Node * mutation(Node * parent, vector<Op*> & functions, vector<Op*> & terminals,
   return offspring;
 }
 
-Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=1.0, float cmut_temp=0.1) {
+/*Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos) {
   Node * offspring = parent->clone();
   Node * backup = parent->clone();
 
@@ -162,10 +162,10 @@ Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos,
     }
 
     // apply coeff mut
-    coeff_mut(offspring, cmut_prob, cmut_temp, false);
+    coeff_mut(offspring, false);
 
     // check is not worse
-    float new_fitness = fit_func.get_fitness(offspring);
+    float new_fitness = g::fit_func->get_fitness(offspring);
     if (new_fitness > backup_fitness) {
       // undo
       offspring->clear();
@@ -180,10 +180,10 @@ Node * gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos,
   }
   
   return offspring;
-}
+}*/
 
 
-Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos, Fitness & fit_func, float cmut_prob=0.5, float cmut_temp=0.1) {
+Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<int>> & fos) {
   Node * offspring = parent->clone();
   float backup_fitness = parent->fitness;
   vector<Node*> offspring_nodes = offspring->subtree();
@@ -197,14 +197,17 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     vector<Op*> backup_ops; backup_ops.reserve(crossover_mask.size());
     vector<int> effectively_changed_indices; effectively_changed_indices.reserve(crossover_mask.size());
 
-    Node * donor = population[randu()*population.size()];
+    int where = randu()*population.size();
+    if (where >= population.size())
+      print("\t",population.size(), "idx:", where);
+    Node * donor = population[where];
     vector<Node*> donor_nodes = donor->subtree();
 
     for(int & idx : crossover_mask) {
       // check if swap is not necessary
       if (offspring_nodes[idx]->op->sym() == donor_nodes[idx]->op->sym()) {
         // might need to swap if the node is a constant that might be optimized
-        if (cmut_prob <= 0 || cmut_temp == 0 || donor_nodes[idx]->op->type() != OpType::otConst)
+        if (g::cmut_prob <= 0 || g::cmut_temp <= 0 || donor_nodes[idx]->op->type() != OpType::otConst)
           continue;
       }
 
@@ -216,7 +219,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     }
 
     // apply coeff mut
-    coeff_mut(offspring, cmut_prob, cmut_temp, false);
+    coeff_mut(offspring, false);
 
     // check if at least one change was meaningful
     for(int i : effectively_changed_indices) {
@@ -231,7 +234,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     float new_fitness = backup_fitness;
     if (change_is_meaningful) {
       // gotta recompute
-      new_fitness = fit_func.get_fitness(offspring);
+      new_fitness = g::fit_func->get_fitness(offspring);
     }
 
     // check is not worse

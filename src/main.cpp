@@ -10,8 +10,7 @@
 using namespace myeig;
 
 int main(int argc, char** argv){
-
-  g::set_options();
+  g::read_options(argc, argv);
   
   auto t = Test();
   t.run_all();

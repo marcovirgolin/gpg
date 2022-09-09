@@ -17,13 +17,13 @@ struct FOSBuilder
   bool first_time = true;
   Mat B;
 
-  vector<vector<int>> build_linkage_tree(vector<Node *> &population, bool ablate_to_random = false)
+  vector<vector<int>> build_linkage_tree(vector<Node *> &population)
   {
     int num_random_variables = population[0]->subtree().size();
 
     Mat MI;
 
-    if (ablate_to_random)
+    if (g::no_linkage)
     {
       MI = Mat::Random(num_random_variables, num_random_variables);
     }

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+make clean
+make release
+cd build/release
+./minigpg -pop 1000 -s 3

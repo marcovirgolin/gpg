@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)  # CMake version check
+cmake_minimum_required(VERSION 3.17)  # CMake version check
 
 # Variables
 set(PROJECT_NAME minigpg)

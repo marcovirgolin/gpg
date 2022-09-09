@@ -84,7 +84,7 @@ struct Evolution {
     vector<Node*> offspring_population; 
     offspring_population.reserve(g::pop_size);
     for(int i = 0; i < g::pop_size; i++) {
-      auto * offspring = efficient_gom(population[i], population, fos, *g::fit_func);
+      auto * offspring = efficient_gom(population[i], population, fos);
       check_n_set_elite(offspring);
       offspring_population.push_back(offspring);
     }
@@ -101,14 +101,13 @@ struct Evolution {
       auto * cr_offspring = crossover(population[i], population[randu()*population.size()]);
       auto * mut_offspring = mutation(cr_offspring, g::functions, g::terminals, 0.75);
       cr_offspring->clear();
-      mut_offspring = coeff_mut(mut_offspring, 1.0, 0.01, false);
+      mut_offspring = coeff_mut(mut_offspring, false);
       // compute fitness
       g::fit_func->get_fitness(mut_offspring);
       check_n_set_elite(mut_offspring);
       // add to off pop
       offspring_population.push_back(mut_offspring);
     }
-    
 
     // selection
     auto selection = popwise_tournament(offspring_population, g::pop_size, g::tournament_size, g::tournament_stochastic);

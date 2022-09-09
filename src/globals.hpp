@@ -6,6 +6,7 @@
 #include "myeig.hpp"
 #include "operator.hpp"
 #include "fitness.hpp"
+#include "cmdparser.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -13,19 +14,19 @@ using namespace myeig;
 namespace g {
 
 // general
-int seed = 42;
+int seed = -1;
 
 // evolution
-int pop_size = 100;
+int pop_size = 1000;
 
 // representation
-int max_depth = 4;
-string init_strategy = "rhh";
+int max_depth = 5;
+string init_strategy = "hh";
 vector<Op*> functions;
 vector<Op*> terminals;
 
 // termination criteria
-int max_generations = 100;
+int max_generations = 100000;
 int max_time = -1;
 int max_evaluations = -1;
 
@@ -33,24 +34,59 @@ int max_evaluations = -1;
 Fitness * fit_func = NULL;
 
 // variation
+bool no_linkage = false;
 float cmut_eps = 1e-5;
+float cmut_prob = 0.0;
+float cmut_temp = 0.01;
+
 
 // selection
-int tournament_size = 10;
+int tournament_size = 2;
 bool tournament_stochastic = false;
 
 
 // Random stuff
 
-void set_options() {
-  pop_size = 1000;
-  max_generations = 1000;
-  seed = 42;
-  srand((unsigned int) seed);
+
+// Functions
+
+void read_options(int argc, char** argv) {
+  cli::Parser parser(argc, argv);
+  parser.set_optional<int>("s", "seed", -1, "Random seed");
+  parser.set_optional<int>("pop", "population_size", 1000, "Population size");
+  parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
+  parser.set_optional<string>("fset", "function_set", "+,-,*,/", "Function set");
+  parser.set_optional<string>("tset", "terminal_set", "x_i,c", "Terminal set");
+  parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
+  parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
+  parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
+  
+  // set options
+  parser.run_and_exit_if_error();
+
+  // seed
+  seed = parser.get<int>("s");
+  if (seed > 0){
+    srand((unsigned int) seed);
+    print("seed: ",seed);
+  } else {
+    print("seed: not set");
+  }
+  
+  // pop size
+  pop_size = parser.get<int>("pop");
+  print("pop. size: ",pop_size);
+
+
+
+  cmut_prob = parser.get<float>("cmp");
+
+  // linkage
+  no_linkage = parser.get<bool>("nolink");
+  print("compute linkage: ", no_linkage ? "false" : "true");
 
   functions = {new Add(), new Sub(), new Mul(), new Div()};
   terminals = {new Feat(0), new Feat(1), new Const()};
-
   fit_func = new AbsCorrFitness();
 
   Mat X(10,3);
@@ -67,8 +103,8 @@ void set_options() {
   Vec y(10);
   y << 1, 0, 1, 9, 2, 3, 1, 4, 5, 2;
   fit_func->set_Xy(X, y);
-
 }
+
 
 void clear_globals() {
   for(auto * f : functions) {

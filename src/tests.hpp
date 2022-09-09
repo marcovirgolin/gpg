@@ -20,19 +20,16 @@ struct Test {
     operators();
     node_output();
     fitness();
+    converge();
     math();
   }
 
   Node * _generate_mock_tree() {
     // Builds x_0 * (x_1 + x_1) aka [* x_0 + x_1 x_1]
     Node * add_node = new Node(new Add());
-
     Node * mul_node = new Node(new Mul());
-
     Node * feat0_node = new Node(new Feat(0));
-
     Node * feat1_node = new Node(new Feat(1));
-
     Node * feat1_node2 = feat1_node->clone();
 
     add_node->append(feat1_node);
@@ -91,6 +88,10 @@ struct Test {
         t->clear();
       }
     }
+    for(auto * op : functions)
+      delete op;
+    for(auto * op : terminals)
+      delete op;
   }
 
   void operators() {
@@ -166,7 +167,29 @@ struct Test {
     float res = f->get_fitness(mock_tree, X, y);
 
     assert(res == expected);
+    delete f;
+    mock_tree->clear();
+  }
 
+  void converge() {
+    Evolution * e = new Evolution();
+
+    // test a converged population
+    vector<Node*> population; 
+    for(int i = 0; i < 10; i++){
+      population.push_back(_generate_mock_tree());
+    }
+    assert(e->converged(population));
+
+    // test a non-converged population
+    auto nodes = population[3]->subtree();
+    delete nodes[0]->op;
+    nodes[0]->op = new Feat(9);
+    assert(!e->converged(population));
+
+    // cleanup
+    e->clear_population(population);
+    delete e;
   }
 
   void math() {
