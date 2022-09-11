@@ -10,16 +10,31 @@ set(CMAKE_CXX_FLAGS_DEBUG
 set(CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} -O2 -DNDEBUG ${CXX_EXTRA}")
 
-# Creat project
+# Create project
 project(${PROJECT_NAME})               
 # Enable c++17 standard
-set(CMAKE_CXX_STANDARD 17)   
+set(CMAKE_CXX_STANDARD 17)  
+
+
+### Inclusions
+
 # Include Eigen
 find_package(Eigen3 REQUIRED)
 set(EIGEN3_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}")
 if(NOT EIGEN3_INCLUDE_DIR)
   message( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 endif()
+
+# Include SWIG for libraries
+find_package(SWIG REQUIRED)
+include(${SWIG_USE_FILE})
+
+# Include python libraries
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+
+### Compilation flags
 
 # Set correct compilation flags
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
@@ -39,3 +54,17 @@ add_executable(${PROJECT_NAME} src/main.cpp )
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+
+
+# SWIG
+set_property(SOURCE src/swig/python/pyface.i PROPERTY CPLUSPLUS ON)
+swig_add_library(py${PROJECT_NAME}
+  TYPE SHARED
+  LANGUAGE python
+  SOURCES src/swig/python/pyface.i src src/swig/python/
+)
+#target_include_directories(${PROJECT_NAME} PUBLIC "include/")
+set_property(TARGET py${PROJECT_NAME} PROPERTY SWIG_COMPILE_OPTIONS -c++)
+target_include_directories(py${PROJECT_NAME} PRIVATE src src/swig/python/)
+target_link_libraries(py${PROJECT_NAME} ${PYTHON_LIBRARIES})
+target_include_directories(py${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})

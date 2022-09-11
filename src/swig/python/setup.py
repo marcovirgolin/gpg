@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 
 """
-setup.py file for SWIG example
+setup.py file for SWIG interface
 """
 
-from distutils.core import setup, Extension
+from setuptools import setup
 
 
-pygpg_module = Extension('_pygpg',
-                        sources=['pyface_wrap.cxx', 'pyface.cxx'],
-                        )
 
-setup (name = 'example',
+setup (name = 'pyminigpg',
        version = '0.1',
        author      = "SWIG Docs",
        description = """Simple swig example from docs""",
-       ext_modules = [pygpg_module],
-       py_modules = ["pygpg"],
+       packages=['pyminigpg'],
+	package_data={'pyminigpg': ['_pyminigpg.so']},
+       include_package_data=True,
+       install_requires=['scikit-learn', 'sympy'],
        )

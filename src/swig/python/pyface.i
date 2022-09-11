@@ -1,8 +1,8 @@
-%module pygpg
+%module pyminigpg
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "pyface.cxx"
+#include "pyface.hpp"
 %}
 
-int ciao();
+%include "pyface.hpp"

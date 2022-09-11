@@ -9,5 +9,10 @@ Install eigen
 conda install -c conda-forge eigen==3.4.0
 
 Install swig
-conda install swig
+conda install swig==4.0.2
 
+Install python dev tools
+consta install -c conda-forge python-devtools==0.9.0
+
+Install pip
+Install setuptools
