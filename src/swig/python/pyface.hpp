@@ -1,10 +1,10 @@
-#include "../../util.hpp"
+//#include "../../util.hpp"
 
 int ciao() {
-  print("ciao");
+  //print("ciao");
   return 42;
 }
 
 void eilo() {
-  print("eilo");
+  //print("eilo");
 }

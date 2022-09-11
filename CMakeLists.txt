@@ -58,13 +58,19 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 
 # SWIG
 set_property(SOURCE src/swig/python/pyface.i PROPERTY CPLUSPLUS ON)
-swig_add_library(py${PROJECT_NAME}
-  TYPE SHARED
+swig_add_library(pyface
+  TYPE MODULE
   LANGUAGE python
-  SOURCES src/swig/python/pyface.i src src/swig/python/
+  SOURCES src/swig/python/pyface.i src/ src/swig/python/pyface.hpp ${EIGEN3_INCLUDE_DIR}
 )
+
 #target_include_directories(${PROJECT_NAME} PUBLIC "include/")
-set_property(TARGET py${PROJECT_NAME} PROPERTY SWIG_COMPILE_OPTIONS -c++)
-target_include_directories(py${PROJECT_NAME} PRIVATE src src/swig/python/)
-target_link_libraries(py${PROJECT_NAME} ${PYTHON_LIBRARIES})
-target_include_directories(py${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+set_property(TARGET pyface PROPERTY SWIG_COMPILE_OPTIONS -c++)
+target_include_directories(pyface PRIVATE src)
+target_include_directories(pyface PRIVATE src/swig/python)
+target_include_directories(pyface PUBLIC ${EIGEN3_INCLUDE_DIR})
+target_include_directories(pyface PUBLIC ${PYTHON_INCLUDE_DIRS}) # not clear whether i need this
+target_link_libraries(pyface ${PYTHON_LIBRARIES})
+
+
+

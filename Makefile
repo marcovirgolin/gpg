@@ -5,15 +5,20 @@ release:
 	make && \
 	cp -r ../../src/swig/python/pyminigpg . && \
 	cp ../../src/swig/python/setup.py . && \
-	mv pyminigpg.py pyminigpg && \
-	mv _pyminigpg.* pyminigpg/_pyminigpg.so && \
+	mv pyface.py pyminigpg && \
+	mv _pyface.* pyminigpg/ && \
 	python setup.py install --user --force
 
 debug:
 	mkdir -p build/debug
 	cd build/debug && \
 	cmake -S ../../ -B . -DCMAKE_BUILD_TYPE=debug && \
-	make
+	make && \
+	cp -r ../../src/swig/python/pyminigpg . && \
+	cp ../../src/swig/python/setup.py . && \
+	mv pyface.py pyminigpg && \
+	mv _pyface.* pyminigpg/ && \
+	python setup.py install --user --force
 
 valgrind:
 	mkdir -p build/valgrind

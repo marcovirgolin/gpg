@@ -1,4 +1,4 @@
-%module pyminigpg
+%module pyface
 
 %{
 #define SWIG_FILE_WITH_INIT
