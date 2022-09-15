@@ -3,6 +3,7 @@
 
 #include <random>
 #include <chrono>
+#include <sstream>
 #include "myeig.hpp"
 #include "operator.hpp"
 #include "fitness.hpp"
@@ -28,8 +29,9 @@ vector<Op*> functions;
 vector<Op*> terminals;
 
 
-// fitness
+// problem
 Fitness * fit_func = NULL;
+string path_to_training_set;
 
 // variation
 bool no_linkage = false;
@@ -42,13 +44,24 @@ float cmut_temp = 0.01;
 int tournament_size = 2;
 bool tournament_stochastic = false;
 
-
-// Other
+// other
 int seed = -1;
 bool verbose = true;
-
+bool _call_as_lib = false;
 
 // Functions
+void set_terminal_set(string setting) {
+  if (option == "auto") {
+    for(int i = 0; i < X.cols(); i++) {
+      terminals.push_back(new Feat(i));
+    }
+    terminals.push_back(new Const());
+  }
+  else {
+    throw runtime_error("Unrecognized setting for terminal set: "+setting);
+  }
+}
+
 
 void read_options(int argc, char** argv) {
   cli::Parser parser(argc, argv);
@@ -65,7 +78,8 @@ void read_options(int argc, char** argv) {
   // problem
   parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
   parser.set_optional<string>("fset", "function_set", "+,-,*,/", "Function set");
-  parser.set_optional<string>("tset", "terminal_set", "x_i,c", "Terminal set");
+  parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
+  parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set");
   // variation
   parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
   parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
@@ -73,6 +87,7 @@ void read_options(int argc, char** argv) {
   // other
   parser.set_optional<int>("s", "seed", -1, "Random seed");
   parser.set_optional<bool>("v", "verbose", true, "Verbose");
+  parser.set_optional<bool>("lib", "call_as_lib", false, "Whether the code is called as a library (e.g., from Python)");
   
   // set options
   parser.run_and_exit_if_error();
@@ -80,7 +95,7 @@ void read_options(int argc, char** argv) {
   // verbose (MUST BE FIRST)
   verbose = parser.get<bool>("v");
   if (!verbose) {
-    // TODO: mute std::cout
+    cout.rdbuf(NULL);
   }
 
   // seed
@@ -91,7 +106,6 @@ void read_options(int argc, char** argv) {
   } else {
     print("seed: not set");
   }
-  
   
   // budget
   pop_size = parser.get<int>("pop");
@@ -106,7 +120,7 @@ void read_options(int argc, char** argv) {
     max_time > -1 ? max_time : INF, " time [s], ", 
     max_evaluations > -1 ? max_evaluations : INF, " evaluations, ", 
     max_node_evaluations > -1 ? max_node_evaluations : INF, " node evaluations" 
-    );
+  );
 
   // initialization
   init_strategy = parser.get<string>("is");
@@ -121,10 +135,35 @@ void read_options(int argc, char** argv) {
   print("compute linkage: ", no_linkage ? "false" : "true");
 
   // problem
+  string fit_func_name = parser.get<string>("fit");
+  if (fit_func_name == "ac")
+    fit_func = new AbsCorrFitness();
+  else if (fit_func_name == "mse")
+    fit_func = new MSEFitness();
+  else if (fit_func_name == "mae")
+    fit_func = new MAEFitness();
+  else
+    throw runtime_error("Unrecognized fitness function name: "+fit_func_name);
+
+  _call_as_lib = parser.get<bool>("lib");
+  if (!_call_as_lib) {
+    // then it expects a training set
+    path_to_training_set = parser.get<string>("train");
+    // load up
+    if (!exists(path_to_training_set)) {
+      throw runtime_error("Training set not found at path "+path_to_training_set);
+    }
+    Mat Xy = load_csv(path_to_training_set);
+    Mat X = remove_column(Xy, Xy.cols()-1);
+    Vec y = Xy.col(Xy.cols()-1);
+    fit_func->set_Xy(X, y);
+  } 
+
+  // representation
   functions = {new Add(), new Sub(), new Mul(), new Div()};
-  terminals = {new Feat(0), new Feat(1), new Const()};
-  fit_func = new AbsCorrFitness();
-  Mat X(10,3);
+  set_terminal_set(parser.get<string>("ts"));
+  
+  /*Mat X(10,3);
   X << 1, 2, 1,
        3, 4, 5,
        5, 6, 7,
@@ -137,7 +176,7 @@ void read_options(int argc, char** argv) {
        12, 32, 2;
   Vec y(10);
   y << 1, 0, 1, 9, 2, 3, 1, 4, 5, 2;
-  fit_func->set_Xy(X, y);
+  fit_func->set_Xy(X, y);*/
 
   // other
   

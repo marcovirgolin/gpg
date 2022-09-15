@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <random>
+#include <fstream>
 #include <chrono>
 #include "myeig.hpp"
 
@@ -100,6 +101,58 @@ void replace(Vec & x, float what, float with) {
   for(int i = 0; i < x.size(); i++)
     if (x[i] == what)
       x[i] = with;
+}
+
+vector<int> create_range(int n) {
+  vector<int> x; x.reserve(n);
+  for(int i = 0; i < n; i++)
+    x.push_back(i);
+  return x;
+}
+
+Mat remove_column(Mat & X, int col_idx) {
+  // returns a new matrix without that column (the original is not modified)
+  Mat R(X.rows(), X.cols()-1);
+  for(int i = 0; i < X.rows(); i++) {
+    for(int j = 0; j < X.cols(); j++) {
+      if (j == col_idx)
+        continue;
+      R(i,j) = X(i,j);
+    }
+  }
+  return R;
+}
+
+Mat load_csv(const std::string & path, char separator=',') {
+  // parser from https://stackoverflow.com/questions/34247057/how-to-read-csv-file-and-assign-to-eigen-matrix
+  ifstream indata;
+  indata.open(path);
+  string line;
+  vector<float> values;
+  uint rows = 0;
+  while (getline(indata, line)) {
+    stringstream line_stream(line);
+    string cell;
+    while (getline(line_stream, cell, separator)) {
+      values.push_back(stof(cell));
+    }
+    ++rows;
+  }
+  int cols = values.size()/rows;
+
+  Mat R(rows, cols);
+  for(int i = 0; i < rows; i++) {
+    for(int j = 0; j < cols; j++) {
+      R(i,j) = values[j + i*(cols)];
+    }
+  }
+  return R;
+}
+
+bool exists(string & file_path)
+{
+    std::ifstream file(file_path.c_str());
+    return file.good();
 }
 
 #endif
