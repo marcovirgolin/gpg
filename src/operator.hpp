@@ -7,6 +7,8 @@
 using namespace std;
 using namespace myeig;
 
+// IMPORTANT: All operators need to be defined in globals.h's `all_operators` field to be accessible
+
 enum OpType {
   otFun, otFeat, otConst
 };
@@ -161,10 +163,73 @@ struct Div : Fun {
   }
 
   Vec apply(Mat & X) override {
-    // division by 0 is undefined thus conver to NAN
+    // division by 0 is undefined thus convert to NAN
     Vec denom = X.col(1);
     replace(denom, 0, NAN);
     return X.col(0)/denom;
+  }
+
+};
+
+struct Sin : Fun {
+
+  Op * clone() override {
+    return new Sin();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "sin";
+  }
+
+  Vec apply(Mat & X) override {
+    return X.sin();
+  }
+
+};
+
+struct Cos : Fun {
+
+  Op * clone() override {
+    return new Cos();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "cos";
+  }
+
+  Vec apply(Mat & X) override {
+    return X.cos();
+  }
+
+};
+
+struct Log : Fun {
+
+  Op * clone() override {
+    return new Log();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "log";
+  }
+
+  Vec apply(Mat & X) override {
+    // Log of x < 0 is undefined (and =0 is -inf) thus convert to NAN
+    Vec x = X.col(0);
+    replace(x, 0, NAN, "<=");
+    return x.log();
   }
 
 };

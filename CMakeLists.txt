@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.17)  # CMake version check
+cmake_policy(SET CMP0026 NEW)
+cmake_policy(SET CMP0051 NEW)
 
 # Variables
 set(PROJECT_NAME minigpg)
@@ -32,6 +34,7 @@ include(${SWIG_USE_FILE})
 # Include python libraries
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_PATH})
 
 
 ### Compilation flags

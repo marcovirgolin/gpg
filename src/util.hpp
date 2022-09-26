@@ -5,6 +5,7 @@
 #include <random>
 #include <fstream>
 #include <chrono>
+#include <iterator>
 #include "myeig.hpp"
 
 using namespace std;
@@ -97,11 +98,35 @@ vector<int> rand_perm(int num_elements) {
   return argsort(rand_vec);
 }
 
-void replace(Vec & x, float what, float with) {
-  for(int i = 0; i < x.size(); i++)
-    if (x[i] == what)
-      x[i] = with;
+Vec replace(Vec & x, float what, float with, string condition="=") {
+  // returns a copy 
+  Vec r(x);
+  if (condition == "=") {
+    for(int i = 0; i < x.size(); i++)
+      if (r[i] == what)
+        r[i] = with;
+  } else if (condition == "<=") {
+    for(int i = 0; i < x.size(); i++)
+      if (r[i] <= what)
+        r[i] = with;
+  } else if (condition == ">=") {
+    for(int i = 0; i < x.size(); i++)
+      if (r[i] >= what)
+        r[i] = with;
+  } else if (condition == "<") {
+    for(int i = 0; i < x.size(); i++)
+      if (r[i] < what)
+        r[i] = with;
+  } else if (condition == ">") {
+    for(int i = 0; i < x.size(); i++)
+      if (r[i] > what)
+        r[i] = with;
+  } else {
+    throw runtime_error("Unrecognized condition: " + condition);
+  }
+  return r;
 }
+  
 
 vector<int> create_range(int n) {
   vector<int> x; x.reserve(n);
@@ -153,6 +178,41 @@ bool exists(string & file_path)
 {
     std::ifstream file(file_path.c_str());
     return file.good();
+}
+
+string replace(string& source, const string& what, string with)
+{
+  // Solution by Ingmar: https://stackoverflow.com/a/29752943
+  string new_string;
+  new_string.reserve(source.length());  // avoids a few memory allocations
+
+  string::size_type lastPos = 0;
+  string::size_type findPos;
+
+  while(string::npos != (findPos = source.find(what, lastPos)))
+  {
+    new_string.append(source, lastPos, findPos - lastPos);
+    new_string += with;
+    lastPos = findPos + what.length();
+  }
+
+  // Care for the rest after last occurrence
+  new_string += source.substr(lastPos);
+
+  return new_string;
+}
+
+vector<string> split_string(string & original, string delimiter=",") {
+  vector<string> result;
+  string changed_string = original;
+  if (delimiter != " ") {
+    changed_string = replace(original, delimiter, " ");
+  }
+  istringstream iss(changed_string);
+  result = {istream_iterator<string>
+      {iss}, istream_iterator<string>
+      {}};
+  return result;
 }
 
 #endif
