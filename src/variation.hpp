@@ -35,7 +35,6 @@ Node * _grow_tree_recursive(vector<Op*> functions, vector<Op*> terminals, int ma
   return n;
 }
 
-
 Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth, string init_type="rhh") {
 
   int max_arity = 0;
@@ -261,6 +260,14 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
   }
   
   return offspring;
+}
+
+void append_linear_scaling_terms(Node * tree) {
+  Vec p = tree->get_output(g::fit_func->X_train);
+  // compute a, b, append
+
+  throw runtime_error("Not implemented");
+
 }
 
 

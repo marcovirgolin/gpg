@@ -131,6 +131,10 @@ struct Evolution {
     }
 
     elite->print_subtree();
+    // if MAE, append linear scaling terms
+    if (g::fit_func->name() == "ac") {
+      append_linear_scaling_terms(elite); 
+    }
 
   }
 

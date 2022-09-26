@@ -35,7 +35,8 @@ void setup(char * options) {
   auto opts = split_string(str_options, " ");
   int argc = opts.size()+1;
   char * argv[argc];
-  argv[0] = "minigpg";
+  string title = "minigpg";
+  argv[0] = (char*) title.c_str();
   for (int i = 1; i < argc; i++) {
     argv[i] = (char*) opts[i-1].c_str();
   }
@@ -48,16 +49,16 @@ void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
   auto X = Xy.first;
   auto y = Xy.second;
 
-  // continue
   g::fit_func->set_Xy(X, y);
+  if (g::terminals.empty()) {
+    g::set_terminals("auto");
+  }
   evo->run();
-  print(g::max_generations);
 }
 
 void predict(double * X_n_p, int n_obs, int n_feats_plus_one) {
   if (!evo->elite) {
-    print("Not fitted");
-    //throw runtime_error("Not fitted");
+    throw runtime_error("Not fitted");
   }
   // assemble Mat
   myeig::Mat X = _assemble_Xy(X_n_p, n_obs, n_feats_plus_one).first;

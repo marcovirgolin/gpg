@@ -80,7 +80,6 @@ namespace g {
     }
   }
 
-
   void read_options(int argc, char** argv) {
     cli::Parser parser(argc, argv);
     
@@ -182,8 +181,14 @@ namespace g {
     set_functions(fset);
     print("function set: "+fset);
     string tset = parser.get<string>("tset");
-    set_terminals(tset);
-    print("terminal set: "+tset);
+    if (!_call_as_lib && tset == "auto") {
+      set_terminals(tset);
+      print("terminal set: "+tset);
+    } else if (tset != "auto") {
+      set_terminals(tset);
+      print("terminal set: "+tset);
+    }
+    
     
     /*Mat X(10,3);
     X << 1, 2, 1,

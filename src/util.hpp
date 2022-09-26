@@ -148,6 +148,8 @@ Mat remove_column(Mat & X, int col_idx) {
   return R;
 }
 
+
+
 Mat load_csv(const std::string & path, char separator=',') {
   // parser from https://stackoverflow.com/questions/34247057/how-to-read-csv-file-and-assign-to-eigen-matrix
   ifstream indata;
@@ -214,5 +216,6 @@ vector<string> split_string(string & original, string delimiter=",") {
       {}};
   return result;
 }
+
 
 #endif

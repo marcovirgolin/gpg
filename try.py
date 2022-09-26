@@ -2,7 +2,7 @@ import numpy as np
 from pyminigpg.sk import GPGRegressor
 from sklearn.metrics import r2_score
 
-g = GPGRegressor(pop=10, g=10)
+g = GPGRegressor(pop=100, g=100, d=3, fit="mae")
 
 
 X = np.random.randn(1000, 3)
