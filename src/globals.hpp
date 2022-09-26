@@ -104,14 +104,14 @@ namespace g {
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
     parser.set_optional<int>("s", "seed", -1, "Random seed");
-    parser.set_optional<bool>("v", "verbose", true, "Verbose");
+    parser.set_optional<bool>("verbose", "verbose", false, "Verbose");
     parser.set_optional<bool>("lib", "call_as_lib", false, "Whether the code is called as a library (e.g., from Python)");
     
     // set options
     parser.run_and_exit_if_error();
 
     // verbose (MUST BE FIRST)
-    verbose = parser.get<bool>("v");
+    verbose = parser.get<bool>("verbose");
     if (!verbose) {
       cout.rdbuf(NULL);
     }
@@ -120,7 +120,7 @@ namespace g {
     seed = parser.get<int>("s");
     if (seed > 0){
       srand((unsigned int) seed);
-      print("seed: ",seed);
+      print("seed: ", seed);
     } else {
       print("seed: not set");
     }

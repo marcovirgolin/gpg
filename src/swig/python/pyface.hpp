@@ -9,15 +9,6 @@ using namespace std;
 Node * best = NULL;
 Evolution * evo = NULL;
 
-int ciao() {
-  print("ciao");
-  return 42;
-}
-
-void eilo() {
-  print("eilo");
-}
-
 pair<myeig::Mat, myeig::Vec> _assemble_Xy(double * X_n_y, int n_obs, int n_feats_plus_label) {
   myeig::Mat X(n_obs, n_feats_plus_label);
   myeig::Vec y(n_obs);
@@ -39,10 +30,15 @@ void _include_prediction_back(Vec & prediction, double * X_n_p, int n_feats_plus
   }
 }
 
-void setup() {
-  string options = "";
-  int argc = 1;
+void setup(char * options) {
+  string str_options = string(options);
+  auto opts = split_string(str_options, " ");
+  int argc = opts.size()+1;
   char * argv[argc];
+  argv[0] = "minigpg";
+  for (int i = 1; i < argc; i++) {
+    argv[i] = (char*) opts[i-1].c_str();
+  }
   g::read_options(argc, argv);
   evo = new Evolution();
 }

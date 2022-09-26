@@ -7,9 +7,23 @@ sys.path.insert(0, os.path.join(
 
 class GPGRegressor():
 
-  def __init__(self):
-    _f.setup()
-    pass
+  def __init__(self, verbose=True, **kwargs):
+    s = ""
+    for k in kwargs:
+      if type(kwargs[k]) == bool:
+        print(k)
+        if kwargs[k] == True:
+          s += f" -{k}"
+        else:
+          s += f" -{k} 0"
+      else:
+        s += f" -{k} {kwargs[k]}"
+    s = s[1:] + " -lib"
+    if verbose:
+      s += " -verbose"
+      
+    _f.setup(s)
+
 
   def fit(self, X, y):
     Xy = np.hstack((X, y.reshape((-1,1))))
