@@ -2,7 +2,7 @@ import numpy as np
 from pyminigpg.sk import GPGRegressor
 from sklearn.metrics import r2_score
 
-g = GPGRegressor(pop=100, g=20, d=2, fit="ac")
+g = GPGRegressor(pop=1000, g=20, d=2, fit="ac")
 
 
 X = np.random.randn(1000, 3)
@@ -16,3 +16,6 @@ g.fit(X,y)
 p = g.predict(X)
 
 print(r2_score(y, p))
+
+m = g.model()
+print(m)

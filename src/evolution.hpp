@@ -135,7 +135,9 @@ struct Evolution {
       elite = append_linear_scaling(elite); 
     }
 
-    elite->print_subtree();
+    if (!g::_call_as_lib) {
+      print(elite->human_repr());
+    }
   }
 
 };

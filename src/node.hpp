@@ -167,6 +167,23 @@ struct Node {
     print(str);
   }
 
+
+  void _human_repr_recursive(string & expr) {
+    int arity = op->arity();
+    vector<string> args; args.reserve(arity);
+    for(int i = 0; i < arity; i++) {
+      children[i]->_human_repr_recursive(expr);
+      args.push_back(expr);
+    }
+    expr = op->human_repr(args);
+  }
+
+  string human_repr() {
+    string result = "";
+    _human_repr_recursive(result);
+    return result;
+  }
+
 };
 
 

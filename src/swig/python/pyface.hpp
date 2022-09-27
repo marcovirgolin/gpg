@@ -71,3 +71,12 @@ void predict(double * X_n_p, int n_obs, int n_feats_plus_one) {
 
   return;
 }
+
+void model(char * model_str) {
+  if (!evo->elite) {
+    throw runtime_error("Not fitted");
+  }
+  string model_repr = evo->elite->human_repr();
+  sprintf(model_str, model_repr.c_str());
+  return;
+}

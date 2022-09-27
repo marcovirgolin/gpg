@@ -29,6 +29,10 @@ struct Op {
     throw runtime_error("Not implemented");
   }
 
+  virtual string human_repr(vector<string> & args) {
+    throw runtime_error("Not implemented");
+  }
+
   virtual OpType type() {
     throw runtime_error("Not implemented");
   }
@@ -42,6 +46,34 @@ struct Op {
 struct Fun : Op {
   OpType type() override {
     return OpType::otFun;
+  }
+
+  string _human_repr_binary_between(vector<string> & args) {
+    return "(" + args[0] + this->sym() + args[1] + ")";
+  }
+
+  string _human_repr_unary_before(vector<string> & args) {
+    return this->sym()+ "(" + args[0] + ")";
+  }
+
+  string _human_repr_common(vector<string> & args) {
+    if (arity() == 2) {
+      return _human_repr_binary_between(args);
+    } else if (arity() == 1) {
+      return _human_repr_unary_before(args);
+    } else {
+      throw runtime_error("Not implemented");
+    }
+  }
+
+  virtual string human_repr(vector<string> & args) override {
+    return _human_repr_common(args);
+  }
+};
+
+struct Term : Op {
+  virtual string human_repr(vector<string> & args) override {
+    return sym();
   }
 };
 
@@ -118,7 +150,7 @@ struct Mul : Fun {
   string sym() override {
     return "*";
   }
-
+  
   Vec apply(Mat & X) override {
     return X.col(0)*X.col(1);
   }
@@ -139,6 +171,7 @@ struct Inv : Fun {
     return "1/";
   }
 
+  
   Vec apply(Mat & X) override {
     // division by 0 is undefined thus conver to NAN
     Vec denom = X.col(0);
@@ -234,7 +267,7 @@ struct Log : Fun {
 
 };
 
-struct Feat : Op {
+struct Feat : Term {
 
   int id;
   Feat(int id) {
@@ -263,11 +296,14 @@ struct Feat : Op {
 
 };
 
-struct Const : Op {
+struct Const : Term {
 
   float c;
   Const(float c=NAN) {
     this->c=c;
+    if (abs(this->c) < 1e-6) {
+      this->c = 0;
+    }
   }
 
   Op * clone() override {
@@ -276,6 +312,9 @@ struct Const : Op {
 
   void _sample() {
     this->c = randu()*10 - 5;
+    if (abs(this->c) < 1e-6) {
+      this->c = 0;
+    }
   }
 
   int arity() override {

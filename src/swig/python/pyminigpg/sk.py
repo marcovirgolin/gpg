@@ -1,6 +1,7 @@
 from pyminigpg import pyface as _f
 import sys, os
 import numpy as np
+import sympy
 
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pyminigpg'))
@@ -36,3 +37,8 @@ class GPGRegressor():
     _f.predict(X)
     prediction = X[:,X.shape[1]-1]
     return prediction
+
+  def model(self):
+    model = _f.model()
+    model = sympy.simplify(model)
+    return model

@@ -102,7 +102,7 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
         float std = g::cmut_temp*abs(c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
-        float mutated_c = c * randn()*std; 
+        float mutated_c = roundd(c * randn()*std, 6); 
         ((Const*)n->op)->c = mutated_c;
 
       }
