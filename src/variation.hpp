@@ -10,24 +10,40 @@
 
 using namespace std;
 
+Op * _sample_operator(vector<Op *> & operators, Vec & cumul_probs) {
+  float r = randu();
+  int i = 0;
+  while (r >= cumul_probs[i]) {
+    i++;
+  }
+  return operators[i]->clone();  
+}
 
-Node * _grow_tree_recursive(vector<Op*> functions, vector<Op*> terminals, int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.5) {
+Op * _sample_function() {
+  return _sample_operator(g::functions, g::cumul_fset_probs);
+}
+
+Op * _sample_terminal() {
+  return _sample_operator(g::terminals, g::cumul_tset_probs);
+}
+
+Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.25) {
   Node * n = NULL;
 
   if (max_depth_left > 0) {
     if (actual_depth_left > 0 && randu() < 1.0-terminal_prob) {
-      n = new Node(functions[randu() * functions.size()]->clone());
+      n = new Node(_sample_function());
     } else {
-      n = new Node(terminals[randu() * terminals.size()]->clone());
+      n = new Node(_sample_terminal());
     }
 
     for (int i = 0; i < max_arity; i++) {
-      Node * c = _grow_tree_recursive(functions, terminals, max_arity,
+      Node * c = _grow_tree_recursive(max_arity,
         max_depth_left - 1, actual_depth_left - 1, curr_depth + 1, terminal_prob);
       n->append(c);
     }
   } else {
-    n = new Node(terminals[randu() * terminals.size()]->clone());
+    n = new Node(_sample_terminal());
   }
 
   assert(n != NULL);
@@ -35,10 +51,10 @@ Node * _grow_tree_recursive(vector<Op*> functions, vector<Op*> terminals, int ma
   return n;
 }
 
-Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth, string init_type="rhh") {
+Node * generate_tree(int max_depth, string init_type="hh") {
 
   int max_arity = 0;
-  for(Op * op : functions) {
+  for(Op * op : g::functions) {
     int op_arity = op->arity();
     if (op_arity > max_arity)
       max_arity = op_arity;
@@ -54,9 +70,9 @@ Node * generate_tree(vector<Op*> functions, vector<Op*> terminals, int max_depth
     bool is_full = randu() < .5;
 
     if (is_full)
-      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, actual_depth, -1, 0.0);
+      tree = _grow_tree_recursive(max_arity, max_depth, actual_depth, -1, 0.0);
     else
-      tree = _grow_tree_recursive(functions, terminals, max_arity, max_depth, actual_depth, -1);
+      tree = _grow_tree_recursive(max_arity, max_depth, actual_depth, -1);
 
   } else {
     throw runtime_error("Unrecognized init_type "+init_type);
@@ -129,10 +145,10 @@ Node * mutation(Node * parent, vector<Op*> & functions, vector<Op*> & terminals,
   for(int i : crossover_mask) {
     delete nodes[i]->op;
     if (nodes[i]->children.size() > 0 && randu() < prob_fun) {
-      nodes[i]->op = functions[randu()*functions.size()]->clone();
+      nodes[i]->op = _sample_function();
     }
     else {
-      nodes[i]->op = terminals[randu()*terminals.size()]->clone();
+      nodes[i]->op = _sample_terminal();
     }
   }
 

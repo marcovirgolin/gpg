@@ -38,8 +38,10 @@ namespace g {
   string init_strategy;
   vector<Op*> functions;
   vector<Op*> terminals;
-  Vec fset_probs;
-  Vec tset_probs;
+  Vec cumul_fset_probs;
+  Vec cumul_tset_probs;
+  string lib_tset; // cached for later, when `fit` is called
+  string lib_tset_probs; // cached for later, when `fit` is called
 
   // problem
   Fitness * fit_func = NULL;
@@ -93,6 +95,62 @@ namespace g {
     }
   }
 
+  Vec _compute_custom_cumul_probs_operator_set(string setting, vector<Op*> & op_set) {
+
+    auto str_v = split_string(setting);
+    if (str_v.size() != op_set.size()) {
+      throw runtime_error("Size of the probabilities for function or terminal set does not match the size of the respective set: "+setting);
+    }
+
+    Vec result(op_set.size());
+    float cumul_prob = 0;
+    for (int i = 0; i < str_v.size(); i++) {
+      cumul_prob += stof(str_v[i]);
+      result[i] = cumul_prob;
+    }
+
+    if (abs(1.0-result[result.size()-1]) > 1e-3) {
+      throw runtime_error("The probabilties for the respective operator set do not sum to 1: "+setting);
+    }
+
+    return result;
+
+  }
+
+  void set_function_probabilities(string setting) {
+      
+    if (setting == "auto") {
+      // set unary operators to have half the chance other ones (which are normally binary)
+      Veci arities(functions.size());
+      int num_unary = 0;
+      for(int i = 0; i < functions.size(); i++) {
+        arities[i] = functions[i]->arity();
+        if (arities[i] == 1) {
+          num_unary++;
+        }
+      }
+
+      int num_other = arities.size() - num_unary;
+      float mass_unary = 0.5*num_other/(1.0*functions.size());
+      float mass_other = 1.0 - mass_unary;
+
+      float cumul_prob = 0;
+      cumul_fset_probs = Vec(functions.size());
+      for (int i = 0; i < arities.size(); i++) {
+        if (arities[i] == 1) {
+          cumul_prob += mass_unary / (1.0*num_unary);
+        } else {
+          cumul_prob += mass_other / (1.0*num_other);
+        }
+        cumul_fset_probs[i] = cumul_prob;
+      }
+      return;
+    }
+
+    // else, use what provided
+    cumul_fset_probs = _compute_custom_cumul_probs_operator_set(setting, functions);
+  }
+
   void set_terminals(string setting) {
     assert(terminals.empty());
 
@@ -125,6 +183,34 @@ namespace g {
     }
   }
 
+  void set_terminal_probabilities(string setting) {
+    if (setting == "auto") {
+      cumul_tset_probs = Vec(terminals.size());
+      float p = 1.0 / terminals.size();
+      float cumul_p = 0;
+      for (int i = 0; i < terminals.size(); i++) {
+        cumul_p += p;
+        cumul_tset_probs[i] = cumul_p;
+      }
+      return;
+    }
+    // else, use what provided
+    cumul_tset_probs = _compute_custom_cumul_probs_operator_set(setting, terminals);
+  }
+
+  string str_terminal_set() {
+    string str = "";
+    for (Op * el : terminals) {
+      if (el->type() == OpType::otConst && isnan(((Const*)el)->c)) {
+        str += "erc,";
+      } else {
+        str += el->sym() + ",";
+      }
+    }
+    str = str.substr(0, str.size()-1);
+    return str;
+  }
+
   void read_options(int argc, char** argv) {
     cli::Parser parser(argc, argv);
     
@@ -140,9 +226,9 @@ namespace g {
     // problem
     parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
     parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
+    parser.set_optional<string>("fset_probs", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
     parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
-    parser.set_optional<string>("fset_prob", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
-    parser.set_optional<string>("tset_prob", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
+    parser.set_optional<string>("tset_probs", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
     parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
@@ -220,15 +306,17 @@ namespace g {
     // representation
     string fset = parser.get<string>("fset");
     set_functions(fset);
-    print("function set: "+fset);
-    string tset = parser.get<string>("tset");
-    if (!_call_as_lib && tset == "auto") {
-      set_terminals(tset);
-      print("terminal set: "+tset);
-    } else if (tset != "auto") {
-      set_terminals(tset);
-      print("terminal set: "+tset);
-    }
+    string fset_p = parser.get<string>("fset_probs");
+    set_function_probabilities(fset_p);
+    print("function set: ",fset," (probs: ",fset_p,")");
+    
+    lib_tset = parser.get<string>("tset");
+    lib_tset_probs = parser.get<string>("tset_probs");
+    if (!_call_as_lib) {
+      set_terminals(lib_tset);
+      set_terminal_probabilities(lib_tset_probs);
+      print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs,")");
+    } 
     
     
     /*Mat X(10,3);

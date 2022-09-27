@@ -132,7 +132,9 @@ struct AbsCorrFitness : Fitness {
     Vec out = n->get_output(X);
 
     float fitness = 1.0-abs(corr(y, out));
-    if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
+    // Below, the < 0 can happen due to float overflow, while 
+    // the = 0 is meant to penalize constants as much as broken solutions
+    if (isnan(fitness) || fitness <= 0) 
       fitness = INF;
     n->fitness = fitness;
 

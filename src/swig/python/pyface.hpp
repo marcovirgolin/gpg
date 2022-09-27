@@ -10,7 +10,7 @@ Node * best = NULL;
 Evolution * evo = NULL;
 
 pair<myeig::Mat, myeig::Vec> _assemble_Xy(double * X_n_y, int n_obs, int n_feats_plus_label) {
-  myeig::Mat X(n_obs, n_feats_plus_label);
+  myeig::Mat X(n_obs, n_feats_plus_label-1);
   myeig::Vec y(n_obs);
   for(int i = 0; i < n_obs; i++) {
     double * row = &X_n_y[i*(n_feats_plus_label)];
@@ -24,7 +24,7 @@ pair<myeig::Mat, myeig::Vec> _assemble_Xy(double * X_n_y, int n_obs, int n_feats
 
 void _include_prediction_back(Vec & prediction, double * X_n_p, int n_feats_plus_one) {
   int n_obs = prediction.size();
-  
+
   for(int i = 0; i < n_obs; i++) {
     X_n_p[i*(n_feats_plus_one)+n_feats_plus_one-1] = (double) prediction(i);
   }
@@ -51,7 +51,9 @@ void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
 
   g::fit_func->set_Xy(X, y);
   if (g::terminals.empty()) {
-    g::set_terminals("auto");
+    g::set_terminals(g::lib_tset);
+    g::set_terminal_probabilities(g::lib_tset_probs);
+    print("terminal set: ",g::str_terminal_set()," (probs: ",g::lib_tset_probs,")");
   }
   evo->run();
 }

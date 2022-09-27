@@ -69,7 +69,7 @@ struct Evolution {
   void init_pop() {
     population.reserve(g::pop_size);
     for(int i = 0; i < g::pop_size; i++) {
-      auto * tree = generate_tree(g::functions, g::terminals, g::max_depth, g::init_strategy);
+      auto * tree = generate_tree(g::max_depth, g::init_strategy);
       g::fit_func->get_fitness(tree);
       check_n_set_elite(tree);
       population.push_back(tree);
