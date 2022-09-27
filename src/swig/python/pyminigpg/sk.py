@@ -12,11 +12,8 @@ class GPGRegressor():
     s = ""
     for k in kwargs:
       if type(kwargs[k]) == bool:
-        print(k)
         if kwargs[k] == True:
           s += f" -{k}"
-        else:
-          s += f" -{k} 0"
       else:
         s += f" -{k} {kwargs[k]}"
     s = s[1:] + " -lib"
