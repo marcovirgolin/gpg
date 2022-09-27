@@ -75,6 +75,14 @@ double randu() {
   return (double) rand() / (double) (RAND_MAX + 1.0);
 }
 
+int randi(int min_inclusive, int max_exclusive) {
+  int range = max_exclusive - min_inclusive;
+  return min_inclusive + randu()*range;
+}
+
+int randi(int max_exclusive) {
+  return randi(0, max_exclusive);
+}
 
 float randn() {
   // Marsiglia algorithm
