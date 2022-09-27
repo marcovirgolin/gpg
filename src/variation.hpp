@@ -262,11 +262,31 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
   return offspring;
 }
 
-void append_linear_scaling_terms(Node * tree) {
-  Vec p = tree->get_output(g::fit_func->X_train);
-  // compute a, b, append
+Node * append_linear_scaling(Node * tree) {
+  // compute intercept and scaling coefficients, append them to the root
+  Node * add_n, * mul_n, * slope_n, * interc_n;
 
-  throw runtime_error("Not implemented");
+  Vec p = tree->get_output(g::fit_func->X_train);
+
+  pair<float,float> intc_slope = linear_scaling_coeffs(g::fit_func->y_train, p);
+  
+  if (intc_slope.second == 0){
+    add_n = new Node(new Add());
+    interc_n = new Node(new Const(intc_slope.first));
+    add_n->append(interc_n);
+    add_n->append(tree);
+    return add_n;
+  }
+
+  mul_n = new Node(new Mul());
+  slope_n = new Node(new Const(intc_slope.second));
+  add_n = new Node(new Add());
+  interc_n = new Node(new Const(intc_slope.first));
+  mul_n->append(slope_n);
+  mul_n->append(tree);
+  add_n->append(interc_n);
+  add_n->append(mul_n);
+  return add_n;
 
 }
 

@@ -267,7 +267,7 @@ struct Const : Op {
 
   float c;
   Const(float c=NAN) {
-    this->c=NAN;
+    this->c=c;
   }
 
   Op * clone() override {

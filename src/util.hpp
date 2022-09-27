@@ -27,7 +27,7 @@ void print(Args... args)
   (cout << ... << args) << "\n";
 }
 
-float corr(Vec x, Vec y) {
+float corr(Vec & x, Vec & y) {
   float mean_x = x.mean();
   float mean_y = y.mean();
 
@@ -37,12 +37,34 @@ float corr(Vec x, Vec y) {
   float numerator = (res_x*res_y).sum();
   float denominator = sqrt(res_x.square().sum()) * sqrt(res_y.square().sum());
 
-  if (denominator == 0)
+  if (denominator == 0 || isnan(denominator) || isinf(abs(denominator))) 
     return 0;
 
   float result = denominator != 0 ? numerator / denominator : 0;
 
   return result;
+}
+
+pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
+
+  float interc, slope;
+  float y_mean = y.mean();
+  float p_mean = p.mean();
+
+  Vec y_res = y - y_mean;
+  Vec p_res = p - p_mean;
+
+  float denominator = p_res.square().sum();
+
+  if (denominator == 0 || isnan(denominator) || isinf(abs(denominator))) {
+    slope = 0;
+    interc = y_mean;
+  } else {
+    slope = (y_res*p_res).sum() / denominator;
+    interc = y_mean - slope * p_mean;
+  }
+
+  return make_pair(interc, slope);    
 }
 
 float roundd(float x, int num_dec) {

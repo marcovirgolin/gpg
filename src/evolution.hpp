@@ -130,12 +130,12 @@ struct Evolution {
       }
     }
 
-    elite->print_subtree();
-    // if MAE, append linear scaling terms
+    // if abs corr, append linear scaling terms
     if (g::fit_func->name() == "ac") {
-      append_linear_scaling_terms(elite); 
+      elite = append_linear_scaling(elite); 
     }
 
+    elite->print_subtree();
   }
 
 };

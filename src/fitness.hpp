@@ -18,6 +18,10 @@ struct Fitness {
     throw runtime_error("Not implemented");
   }
 
+  virtual Fitness * clone() {
+    throw runtime_error("Not implemented");
+  }
+
   virtual float get_fitness(Node * n, Mat & X, Vec & y) {
     throw runtime_error("Not implemented");
   }
@@ -73,6 +77,10 @@ struct MAEFitness : Fitness {
   string name() override {
     return "mae";
   }
+  
+  Fitness * clone() override {
+    return new MAEFitness();
+  }
 
   float get_fitness(Node * n, Mat & X, Vec & y) override {
     Vec out = n->get_output(X);
@@ -93,6 +101,10 @@ struct MSEFitness : Fitness {
     return "mse";
   }
 
+  Fitness * clone() override {
+    return new MSEFitness();
+  }
+
   float get_fitness(Node * n, Mat & X, Vec & y) override {
     Vec out = n->get_output(X);
 
@@ -110,6 +122,10 @@ struct AbsCorrFitness : Fitness {
 
   string name() override {
     return "ac";
+  }
+
+  Fitness * clone() override {
+    return new AbsCorrFitness();
   }
 
   float get_fitness(Node * n, Mat & X, Vec & y) override {

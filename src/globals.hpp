@@ -21,6 +21,11 @@ namespace g {
     new Log()
   };
 
+  // ALL fitness functions 
+  vector<Fitness*> all_fitness_functions = {
+    new MAEFitness(), new MSEFitness(), new AbsCorrFitness()
+  };
+
   // budget
   int pop_size = 1000;
   int max_generations = 100000;
@@ -33,6 +38,8 @@ namespace g {
   string init_strategy;
   vector<Op*> functions;
   vector<Op*> terminals;
+  Vec fset_probs;
+  Vec tset_probs;
 
   // problem
   Fitness * fit_func = NULL;
@@ -55,28 +62,66 @@ namespace g {
   bool _call_as_lib = false;
 
   // Functions
+  void set_fit_func(string fit_func_name) { 
+    bool found = false;
+    for (auto * f : all_fitness_functions) {
+      if (f->name() == fit_func_name) {
+        found = true;
+        fit_func = f->clone();
+      }
+    }
+    if (!found) {
+      throw runtime_error("Unrecognized fitness function: "+fit_func_name);
+    }
+  }
+
   void set_functions(string setting) {
     assert(functions.empty());
     vector<string> desired_operator_symbs = split_string(setting);
-    for(Op * op : all_operators) {
-      if (find(desired_operator_symbs.begin(), desired_operator_symbs.end(), op->sym()) != desired_operator_symbs.end()) {
-        functions.push_back(op->clone());
+    for (string sym : desired_operator_symbs) {
+      bool found = false;
+      for (Op * op : all_operators) {
+        if (op->sym() == sym) {
+          found = true;
+          functions.push_back(op->clone());
+          break;
+        }
+      }
+      if (!found) {
+        throw runtime_error("Unrecognized function: "+sym);
       }
     }
   }
 
   void set_terminals(string setting) {
     assert(terminals.empty());
-    assert(fit_func);
 
     if (setting == "auto") {
+      assert(fit_func);
       for(int i = 0; i < fit_func->X_train.cols(); i++) {
         terminals.push_back(new Feat(i));
       }
       terminals.push_back(new Const());
     }
     else {
-      throw runtime_error("Unrecognized setting for terminal set: "+setting);
+      vector<string> desired_terminal_symbs = split_string(setting);
+      for (string sym : desired_terminal_symbs) {
+        try {
+          if (sym.size() > 2 && sym.substr(0, 2) == "x_") {
+            // variable
+            int i = stoi(sym.substr(2,sym.size()));
+            terminals.push_back(new Feat(i)); 
+          } else if (sym == "erc") {
+            terminals.push_back(new Const());
+          } else {
+            // constant
+            float c = stof(sym);
+            terminals.push_back(new Const(c));
+          }
+        } catch(std::invalid_argument const& ex) {
+          throw runtime_error("Unrecognized terminal: "+sym);
+        }
+      }
     }
   }
 
@@ -96,7 +141,9 @@ namespace g {
     parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
     parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
     parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
-    parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set");
+    parser.set_optional<string>("fset_prob", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
+    parser.set_optional<string>("tset_prob", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
+    parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
@@ -153,14 +200,8 @@ namespace g {
 
     // problem
     string fit_func_name = parser.get<string>("fit");
-    if (fit_func_name == "ac")
-      fit_func = new AbsCorrFitness();
-    else if (fit_func_name == "mse")
-      fit_func = new MSEFitness();
-    else if (fit_func_name == "mae")
-      fit_func = new MAEFitness();
-    else
-      throw runtime_error("Unrecognized fitness function name: "+fit_func_name);
+    set_fit_func(fit_func_name);
+    print("fitness function: ", fit_func_name);
 
     _call_as_lib = parser.get<bool>("lib");
     if (!_call_as_lib) {
@@ -212,6 +253,9 @@ namespace g {
   void clear_globals() {
     for(auto * o : all_operators) {
       delete o;
+    }
+    for(auto * f : all_fitness_functions) {
+      delete f;
     }
     for(auto * f : functions) {
       delete f;
