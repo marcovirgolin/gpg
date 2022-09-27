@@ -57,6 +57,7 @@ add_executable(${PROJECT_NAME} src/main.cpp )
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
 
 
 # SWIG
@@ -72,8 +73,4 @@ set_property(TARGET pyface PROPERTY SWIG_COMPILE_OPTIONS -c++)
 target_include_directories(pyface PRIVATE src)
 target_include_directories(pyface PRIVATE src/swig/python)
 target_include_directories(pyface PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_include_directories(pyface PUBLIC ${PYTHON_INCLUDE_DIRS}) # not clear whether i need this
 target_link_libraries(pyface ${PYTHON_LIBRARIES})
-
-
-

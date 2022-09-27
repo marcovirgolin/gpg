@@ -1,6 +1,8 @@
 #ifndef EVOLUTION_H
 #define EVOLUTION_H
 
+#include <Python.h>
+
 #include "util.hpp"
 #include "node.hpp"
 #include "variation.hpp"
@@ -122,6 +124,9 @@ struct Evolution {
     init_pop();
 
     for(int i = 0; i < g::max_generations; i++) {
+      if(PyErr_CheckSignals() == -1) {
+        exit(1);
+      }
       gomea_generation();
       print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
       if (converged(population, true)) {
