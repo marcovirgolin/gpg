@@ -211,6 +211,13 @@ struct Test {
     assert(isnan(NAN));
     assert(INF > 99999999.9);
     assert(NINF < -9999999.9);
+
+    // round
+    assert(roundd(0.1, 0)==0);
+    assert(roundd(0.5, 0)==1);
+    assert(roundd(0.0004, 7)==(float)0.0004);
+    assert(roundd(0.0004, 3)==0);
+    assert(roundd(0.0027, 3)==(float)0.003);
   }
 
 };

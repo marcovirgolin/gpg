@@ -71,7 +71,7 @@ struct Fitness {
     update_batch(X.rows());
   }
 
-  void update_batch(int num_observations) {
+  bool update_batch(int num_observations) {
 
     int n = X_train.rows();
     if (num_observations > X_train.rows()) {
@@ -81,13 +81,14 @@ struct Fitness {
     if (num_observations==n) {
       X_batch = X_train;
       y_batch = y_train;
-      return;
+      return false;
     }
     
     // else pick some random elements
     auto chosen = rand_perm(num_observations);
     this->X_batch = X_train(chosen, Eigen::all);
     this->y_batch = y_train(chosen);
+    return true;
   }
 
 };
@@ -108,7 +109,7 @@ struct MAEFitness : Fitness {
     float fitness = (y - out).abs().mean();
     if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
-    n->fitness = fitness;
+    n->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }
@@ -131,7 +132,7 @@ struct MSEFitness : Fitness {
     float fitness = (y-out).square().mean();
     if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
-    n->fitness = fitness;
+    n->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }
@@ -156,7 +157,7 @@ struct AbsCorrFitness : Fitness {
     // the = 0 is meant to penalize constants as much as broken solutions
     if (isnan(fitness) || fitness <= 0) 
       fitness = INF;
-    n->fitness = fitness;
+    n->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }

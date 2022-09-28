@@ -49,11 +49,11 @@ struct Fun : Op {
   }
 
   string _human_repr_binary_between(vector<string> & args) {
-    return "(" + args[0] + this->sym() + args[1] + ")";
+    return "(" + args[0] + " " + this->sym() + " " + args[1] + ")";
   }
 
   string _human_repr_unary_before(vector<string> & args) {
-    return this->sym()+ "(" + args[0] + ")";
+    return this->sym()+ "( " + args[0] + " )";
   }
 
   string _human_repr_common(vector<string> & args) {
@@ -311,10 +311,7 @@ struct Const : Term {
   }
 
   void _sample() {
-    this->c = randu()*10 - 5;
-    if (abs(this->c) < 1e-6) {
-      this->c = 0;
-    }
+    this->c = roundd(randu()*10 - 5, NUM_PRECISION);
   }
 
   int arity() override {

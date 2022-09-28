@@ -27,7 +27,7 @@ Op * _sample_terminal() {
   return _sample_operator(g::terminals, g::cumul_tset_probs);
 }
 
-Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.25) {
+Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.5) {
   Node * n = NULL;
 
   if (max_depth_left > 0) {
@@ -102,7 +102,7 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
         float std = g::cmut_temp*abs(c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
-        float mutated_c = roundd(c * randn()*std, 6); 
+        float mutated_c = roundd(c * randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
 
       }

@@ -153,7 +153,7 @@ struct Node {
     for(int i = 0; i < a; i++)
       C.col(i) = children[i]->get_output(X);
 
-    return op->apply(C);
+    return (op->apply(C) * pow(10.0, NUM_PRECISION)) / (float) pow(10.0,NUM_PRECISION);
   }
 
   void print_subtree() {

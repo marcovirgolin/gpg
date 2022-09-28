@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <iostream>
+#include <iomanip>
 #include <random>
 #include <fstream>
 #include <chrono>
@@ -25,6 +26,14 @@ template<class... Args>
 void print(Args... args)
 {
   (cout << ... << args) << "\n";
+}
+
+float roundd(float x, int num_dec) {
+  return round(x * pow(10.0,num_dec)) / (float) pow(10.0,num_dec);
+}
+
+Vec roundd(Vec & x, int num_dec) {
+  return (x * pow(10.0,num_dec)).round() / (float) pow(10.0,num_dec);
 }
 
 float corr(Vec & x, Vec & y) {
@@ -65,10 +74,6 @@ pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
   }
 
   return make_pair(interc, slope);    
-}
-
-float roundd(float x, int num_dec) {
-  return round(x * num_dec) / (float) num_dec;
 }
 
 double randu() {
@@ -157,7 +162,6 @@ Vec replace(Vec & x, float what, float with, string condition="=") {
   return r;
 }
   
-
 vector<int> create_range(int n) {
   vector<int> x; x.reserve(n);
   for(int i = 0; i < n; i++)
@@ -177,8 +181,6 @@ Mat remove_column(Mat & X, int col_idx) {
   }
   return R;
 }
-
-
 
 Mat load_csv(const std::string & path, char separator=',') {
   // parser from https://stackoverflow.com/questions/34247057/how-to-read-csv-file-and-assign-to-eigen-matrix

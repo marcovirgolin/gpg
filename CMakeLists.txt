@@ -4,6 +4,7 @@ cmake_policy(SET CMP0051 NEW)
 
 # Variables
 set(PROJECT_NAME gpg)
+set(NUM_PRECISION 6)
 
 set(CMAKE_CXX_FLAGS_VALGRIND
     "${CMAKE_CXX_FLAGS_VALGRIND} -g -O0 -DDEBUG -Wall -pedantic ${CXX_EXTRA}")
@@ -51,7 +52,6 @@ endif()
 
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(${PROJECT_NAME} src/main.cpp )
-#add_library(py${PROJECT_NAME} src/pyface.hpp)
 
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)
@@ -60,7 +60,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
 
 # Do not check for CTRL+C from Python for the standalone executable
-target_compile_definitions(${PROJECT_NAME} PRIVATE CLI=1)
+target_compile_definitions(${PROJECT_NAME} PUBLIC CLI=1)
+target_compile_definitions(${PROJECT_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
 
 # SWIG
 set_property(SOURCE src/swig/python/pyface.i PROPERTY CPLUSPLUS ON)
@@ -76,3 +77,5 @@ target_include_directories(pyface PRIVATE src)
 target_include_directories(pyface PRIVATE src/swig/python)
 target_include_directories(pyface PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(pyface ${PYTHON_LIBRARIES})
+target_compile_definitions(pyface PUBLIC PYLIB=1)
+target_compile_definitions(pyface PUBLIC NUM_PRECISION=${NUM_PRECISION})

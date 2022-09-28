@@ -36,8 +36,8 @@ class GPGRegressor():
     Xy = np.hstack((X, y.reshape((-1,1))))
     _f.fit(Xy)
     # extract the model as a sympy and store it internally
-    self.model = _f.model()
-    self.model = sympy.simplify(self.model)
+    self.model = sympy.simplify(_f.model())
+    # finetune  
     if self.finetune:
       import finetuning as ft
       self.model = ft.finetune(self.model)
@@ -49,14 +49,10 @@ class GPGRegressor():
     prediction = X_prime[:,X_prime.shape[1]-1]
     return prediction
 
-  def predict(self, X, use_cpp=False):
+  def predict(self, X, cpp=False):
     # add extra dimension to accomodate prediction
-    if use_cpp:
+    if cpp:
       return self._predict_cpp(X)
     f = conversion.sympy_to_numpy_fn(self.model)
     prediction = f(X)
     return prediction
-
-  def model(self):
-    return self.model
-    

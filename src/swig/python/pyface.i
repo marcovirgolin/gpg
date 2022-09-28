@@ -17,7 +17,7 @@
 
 // string handling
 %include "cstring.i"
-%cstring_bounded_output(char * model_str, 65536);
+%cstring_bounded_output(char * model_str, 1048576);
 
 // my interface
 %include "pyface.hpp"

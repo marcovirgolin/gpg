@@ -218,7 +218,7 @@ struct FOSBuilder
     {
       for (int j = i + 1; j < num_random_variables; j++)
       {
-        MI(i, j) = roundd(MI(i, i) + MI(j, j) - MI(i, j), 5);
+        MI(i, j) = roundd(MI(i, i) + MI(j, j) - MI(i, j), NUM_PRECISION);
         MI(j, i) = MI(i, j);
       }
     }

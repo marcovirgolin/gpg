@@ -4,21 +4,24 @@ from sklearn.metrics import r2_score
 
 np.random.seed(42)
 
-g = GPGRegressor(pop=1000, g=20, d=2, fit="ac", nolink=False, s=2, bs=128)
 
-
-X = np.random.randn(1000, 3)
+X = np.random.randn(512, 3)*10
 
 def grav_law(X):
   return 6.67 * X[:,0]*X[:,1]/(np.square(X[:,2]))
 
 y = grav_law(X)
 
+g = GPGRegressor(pop=1024, g=10, d=5, fit="ac", fset="+,-,*,/", nolink=True, s=4242, bs=128)
 g.fit(X,y)
-p = g.predict(X)
+print(g.model)
+p = g.predict(X, cpp=True)
+#print(p)
 
 print(r2_score(y, p))
 print(np.mean(np.square(y-p)))
+
+
 """
 m = g.model()
 print(m)

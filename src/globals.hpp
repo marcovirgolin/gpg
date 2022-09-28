@@ -8,6 +8,7 @@
 #include "operator.hpp"
 #include "fitness.hpp"
 #include "cmdparser.hpp"
+#include <iomanip>
 
 using namespace std;
 using namespace myeig;
@@ -116,13 +117,13 @@ namespace g {
     }
 
     return result;
-
   }
 
   void set_function_probabilities(string setting) {
       
     if (setting == "auto") {
       // set unary operators to have half the chance other ones (which are normally binary)
+
       Veci arities(functions.size());
       int num_unary = 0;
       for(int i = 0; i < functions.size(); i++) {
@@ -132,17 +133,17 @@ namespace g {
         }
       }
 
-      int num_other = arities.size() - num_unary;
-      float mass_unary = 0.5*num_other/(1.0*functions.size());
-      float mass_other = 1.0 - mass_unary;
+      int num_other = functions.size() - num_unary;
+      float p_unary = 1.0 / (2.0*num_other + num_unary);
+      float p_other = 1.0 / (num_other + 0.5*num_unary);
 
       float cumul_prob = 0;
       cumul_fset_probs = Vec(functions.size());
       for (int i = 0; i < arities.size(); i++) {
         if (arities[i] == 1) {
-          cumul_prob += mass_unary / (1.0*num_unary);
+          cumul_prob += p_unary;
         } else {
-          cumul_prob += mass_other / (1.0*num_other);
+          cumul_prob += p_other;
         }
         cumul_fset_probs[i] = cumul_prob;
       }
@@ -330,23 +331,8 @@ namespace g {
       print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs,")");
     } 
     
-    
-    /*Mat X(10,3);
-    X << 1, 2, 1,
-        3, 4, 5,
-        5, 6, 7,
-        8, 1, 0,
-        4, 4, 2, 
-        1, 1, 1,
-        4, 3, 2, 
-        2, 2, 2,
-        0, 0, 9, 
-        12, 32, 2;
-    Vec y(10);
-    y << 1, 0, 1, 9, 2, 3, 1, 4, 5, 2;
-    fit_func->set_Xy(X, y);*/
-
     // other
+    cout << std::setprecision(NUM_PRECISION);
   }
 
 
