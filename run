@@ -3,4 +3,4 @@
 make clean
 make release
 cd build/release
-./minigpg -pop 1000 -s 3 -verbose
+./gpg -pop 1000 -s 3 -verbose

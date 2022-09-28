@@ -1,8 +1,10 @@
 import numpy as np
-from pyminigpg.sk import GPGRegressor
+from pygpg.sk import GPGRegressor
 from sklearn.metrics import r2_score
 
-g = GPGRegressor(pop=1000, g=20, d=2, fit="ac", nolink=False)
+np.random.seed(42)
+
+g = GPGRegressor(pop=1000, g=20, d=2, fit="ac", nolink=False, s=2)
 
 
 X = np.random.randn(1000, 3)
@@ -16,7 +18,8 @@ g.fit(X,y)
 p = g.predict(X)
 
 print(r2_score(y, p))
-
+print(np.mean(np.square(y-p)))
+"""
 m = g.model()
 print(m)
 
@@ -50,3 +53,4 @@ def _get_gradient(model, coeff_symbols):
 _get_gradient(ms, cs)
 g = sympy.lambdify(cs, ms, modules="numpy")
 print(g(0.99,0.1))
+"""

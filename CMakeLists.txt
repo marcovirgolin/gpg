@@ -3,7 +3,7 @@ cmake_policy(SET CMP0026 NEW)
 cmake_policy(SET CMP0051 NEW)
 
 # Variables
-set(PROJECT_NAME minigpg)
+set(PROJECT_NAME gpg)
 
 set(CMAKE_CXX_FLAGS_VALGRIND
     "${CMAKE_CXX_FLAGS_VALGRIND} -g -O0 -DDEBUG -Wall -pedantic ${CXX_EXTRA}")

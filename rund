@@ -3,4 +3,4 @@
 make clean
 make debug
 cd build/debug
-./minigpg -train ../../boston.csv -pop 40 -g 10 -verbose
+./gpg -train ../../boston.csv -pop 40 -g 10 -verbose

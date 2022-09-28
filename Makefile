@@ -8,12 +8,12 @@ main-build:
 	cd build/$(BUILDTYPE) && \
 	cmake -S ../../ -B . -DCMAKE_BUILD_TYPE=$(BUILDTYPE) && \
 	make && \
-	cp -r ../../src/swig/python/pyminigpg . && \
+	cp -r ../../src/swig/python/pygpg . && \
 	cp ../../src/swig/python/setup.py . && \
-	cp pyface.py pyminigpg && \
-	cp _pyface.* pyminigpg/ && \
+	cp pyface.py pygpg && \
+	cp _pyface.* pygpg/ && \
 	python setup.py install --user --force && \
-	rm -r pyminigpg pyminigpg.egg-info && \
+	rm -r pygpg pygpg.egg-info && \
 	rm setup.py
 
 
