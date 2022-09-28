@@ -162,6 +162,9 @@ dmypy.json
 *.out
 *.app
 
+# Valgrind
+vgcore*
+
 # CMake
 CMakeLists.txt.user
 CMakeCache.txt
@@ -177,3 +180,4 @@ _deps
 # SWIG
 pyface_wrap.cxx
 pygpg.py
+
