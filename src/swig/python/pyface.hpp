@@ -45,16 +45,24 @@ void setup(char * options) {
 }
 
 void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
+  // update training set
   auto Xy = _assemble_Xy(X_n_y, n_obs, n_feats_plus_label);
   auto X = Xy.first;
   auto y = Xy.second;
 
   g::fit_func->set_Xy(X, y);
-  if (g::terminals.empty()) {
-    g::set_terminals(g::lib_tset);
-    g::set_terminal_probabilities(g::lib_tset_probs);
-    print("terminal set: ",g::str_terminal_set()," (probs: ",g::lib_tset_probs,")");
+  // set terminals
+  g::set_terminals(g::lib_tset);
+  g::set_terminal_probabilities(g::lib_tset_probs);
+  print("terminal set: ",g::str_terminal_set()," (probs: ",g::lib_tset_probs,")");
+  // batch size
+  if (g::lib_batch_size == "auto") {
+    g::batch_size = g::fit_func->X_train.rows();
+  } else {
+    g::batch_size = stoi(g::lib_batch_size);
   }
+  print("batch size: ",g::lib_batch_size);
+  // run evolution
   evo->run();
 }
 

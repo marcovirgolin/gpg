@@ -4,7 +4,7 @@ from sklearn.metrics import r2_score
 
 np.random.seed(42)
 
-g = GPGRegressor(pop=1000, g=20, d=2, fit="ac", nolink=False, s=2)
+g = GPGRegressor(pop=1000, g=20, d=2, fit="ac", nolink=False, s=2, bs=128)
 
 
 X = np.random.randn(1000, 3)

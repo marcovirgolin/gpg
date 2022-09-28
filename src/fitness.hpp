@@ -1,6 +1,7 @@
 #ifndef FITNESS_H
 #define FITNESS_H
 
+#include <Eigen/Dense>
 #include "myeig.hpp"
 #include "node.hpp"
 #include "util.hpp"
@@ -11,8 +12,8 @@ struct Fitness {
 
   virtual ~Fitness() {};
 
-  Mat X_train, X_val;
-  Vec y_train, y_val;
+  Mat X_train, X_val, X_batch;
+  Vec y_train, y_val, y_batch;
 
   virtual string name() {
     throw runtime_error("Not implemented");
@@ -29,14 +30,13 @@ struct Fitness {
   // shorthand for training set
   float get_fitness(Node * n, Mat * X=NULL, Vec * y=NULL) {
     if (!X)
-      X = & this->X_train;
+      X = & this->X_batch;
     if (!y)
-      y = & this->y_train;
+      y = & this->y_batch;
     return get_fitness(n, *X, *y);
   }
 
-  Vec get_fitnesses(vector<Node*> population, Mat * X=NULL, Vec * y=NULL, bool compute=true) {
-    
+  Vec get_fitnesses(vector<Node*> population, Mat * X=NULL, Vec * y=NULL, bool compute=true) {  
     Vec fitnesses(population.size());
     for(int i = 0; i < population.size(); i++) {
       if (compute)
@@ -47,7 +47,7 @@ struct Fitness {
     return fitnesses;
   }
 
-  void set_X(Mat & X, string type="train") {
+  void _set_X(Mat & X, string type="train") {
     if (type == "train")
       X_train = X;
     else if (type=="val")
@@ -56,7 +56,7 @@ struct Fitness {
       throw runtime_error("Unrecognized X type "+type);
   }
 
-  void set_y(Vec & y, string type="train") {
+  void _set_y(Vec & y, string type="train") {
     if (type == "train")
       y_train = y;
     else if (type=="val")
@@ -66,8 +66,28 @@ struct Fitness {
   }
 
   void set_Xy(Mat & X, Vec & y, string type="train") {
-    set_X(X, type);
-    set_y(y, type);
+    _set_X(X, type);
+    _set_y(y, type);
+    update_batch(X.rows());
+  }
+
+  void update_batch(int num_observations) {
+
+    int n = X_train.rows();
+    if (num_observations > X_train.rows()) {
+      throw runtime_error("Batch size ("+to_string(num_observations)+") is larger than number of observation in training set ("+to_string(n)+")");
+    }
+
+    if (num_observations==n) {
+      X_batch = X_train;
+      y_batch = y_train;
+      return;
+    }
+    
+    // else pick some random elements
+    auto chosen = rand_perm(num_observations);
+    this->X_batch = X_train(chosen, Eigen::all);
+    this->y_batch = y_train(chosen);
   }
 
 };

@@ -127,6 +127,7 @@ struct Evolution {
       if(PyErr_CheckSignals() == -1) {
         exit(1);
       }
+      g::fit_func->update_batch(g::batch_size);
       gomea_generation();
       print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
       if (converged(population, true)) {

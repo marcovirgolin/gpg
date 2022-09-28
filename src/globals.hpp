@@ -46,6 +46,8 @@ namespace g {
   // problem
   Fitness * fit_func = NULL;
   string path_to_training_set;
+  string lib_batch_size; // cached for later, when `fit` is called
+  int batch_size;
 
   // variation
   bool no_linkage = false;
@@ -230,6 +232,7 @@ namespace g {
     parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
     parser.set_optional<string>("tset_probs", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
     parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
+    parser.set_optional<string>("bs", "batch_size", "auto", "Batch size (default is 'auto', i.e., the entire training set)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
@@ -302,6 +305,15 @@ namespace g {
       Vec y = Xy.col(Xy.cols()-1);
       fit_func->set_Xy(X, y);
     } 
+    lib_batch_size = parser.get<string>("bs");
+    if (!_call_as_lib) {
+      if (lib_batch_size == "auto") {
+        batch_size = fit_func->X_train.rows();
+      } else {
+        batch_size = stoi(lib_batch_size);
+      }
+      print("batch size: ",lib_batch_size);
+    }
 
     // representation
     string fset = parser.get<string>("fset");
