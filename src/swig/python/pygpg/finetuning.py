@@ -1,7 +1,14 @@
 from pygpg import conversion as C
-import torch
 
 
-def finetune(model):
-  torchified = C.expr_to_torch_module(model, torch.float32)
-  return model
+def bfgs():
+  return None
+
+def finetune(sympy_model, tuner='bfgs'):
+  torchified = C.sympy_to_torch(sympy_model)
+  # runs and returns optimized sympy_model
+  if tuner == "bfgs":
+    result = bfgs()
+  # blah
+  return sympy_model
+

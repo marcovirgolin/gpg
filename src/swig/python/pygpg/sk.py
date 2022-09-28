@@ -53,7 +53,7 @@ class GPGRegressor():
     # add extra dimension to accomodate prediction
     if use_cpp:
       return self._predict_cpp(X)
-    f = conversion.expr_to_numpy_fn(self.model)
+    f = conversion.sympy_to_numpy_fn(self.model)
     prediction = f(X)
     return prediction
 
