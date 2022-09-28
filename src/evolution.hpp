@@ -124,7 +124,7 @@ struct Evolution {
     init_pop();
 
     for(int i = 0; i < g::max_generations; i++) {
-      if(PyErr_CheckSignals() == -1) {
+      if(g::_call_as_lib && PyErr_CheckSignals() == -1) {
         exit(1);
       }
       g::fit_func->update_batch(g::batch_size);

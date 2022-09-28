@@ -2,5 +2,4 @@
 
 make clean
 make release
-cd build/release
-./gpg -pop 1000 -s 3 -verbose
+./build/release/gpg -train dataset/diabetes_train.csv -pop 40 -g 10 -verbose

@@ -52,13 +52,15 @@ endif()
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(${PROJECT_NAME} src/main.cpp )
 #add_library(py${PROJECT_NAME} src/pyface.hpp)
-#add_library(R${PROJECT_NAME} src/Rface.cpp)
 
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+# linking
 target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
 
+# Do not check for CTRL+C from Python for the standalone executable
+target_compile_definitions(${PROJECT_NAME} PRIVATE CLI=1)
 
 # SWIG
 set_property(SOURCE src/swig/python/pyface.i PROPERTY CPLUSPLUS ON)
