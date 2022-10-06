@@ -127,11 +127,13 @@ struct Evolution {
       if(g::_call_as_lib && PyErr_CheckSignals() == -1) {
         exit(1);
       }
+      // update mini batch
       bool is_updated = g::fit_func->update_batch(g::batch_size);
       if (is_updated && elite) {
         elite->clear();
         elite = NULL;
       }
+      
       gomea_generation();
       print("gen: ",++gen_number, " elite fitness: ", elite->fitness);
       if (converged(population, true)) {

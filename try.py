@@ -12,12 +12,16 @@ def grav_law(X):
 
 y = grav_law(X)
 
-g = GPGRegressor(pop=1024, g=10, d=5, fit="ac", fset="+,-,*,/", nolink=True, s=4242, bs=128)
+g = GPGRegressor(pop=128, g=10, d=5, fit="ac", fset="+,-,*,/", 
+  nolink=True, s=4242, bs=128, 
+  finetune=True)
 g.fit(X,y)
 print(g.model)
 p = g.predict(X, cpp=True)
-#print(p)
+print(r2_score(y, p))
+print(np.mean(np.square(y-p)))
 
+p = g.predict(X, cpp=False)
 print(r2_score(y, p))
 print(np.mean(np.square(y-p)))
 

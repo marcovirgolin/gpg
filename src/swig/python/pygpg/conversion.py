@@ -6,7 +6,6 @@ from functools import partial
 Code by Pierre-Alexandre Kamienny
 https://github.com/pakamienny/e2e_transformer/blob/a4208974779e2109593297ef1992d0b14dd91b00/symbolicregression/envs/simplifiers.py
 """
-
 def sympy_to_torch(sympy_model, dtype=torch.float32):
   mod = sympytorch.SymPyModule(expressions=[sympy_model])
   mod.to(dtype)
@@ -16,7 +15,7 @@ def sympy_to_torch(sympy_model, dtype=torch.float32):
           local_dict["x_{}".format(d)]=x[:, d]
       if constants is not None:
           for d in range(constants.shape[0]):
-              local_dict["CONSTANT_{}".format(d)]=constants[d]
+              local_dict["C_{}".format(d)]=constants[d]
       return _mod(**local_dict)
   return partial(wrapper_fn, mod)
 

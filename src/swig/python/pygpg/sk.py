@@ -15,7 +15,7 @@ class GPGRegressor():
     if "finetune" in kwargs:
       if kwargs["finetune"] == True:
         self.finetune = True
-      kwargs.remove("finetune")
+      del kwargs["finetune"]
 
     # to pass to c++
     s = ""
@@ -40,7 +40,7 @@ class GPGRegressor():
     # finetune  
     if self.finetune:
       import finetuning as ft
-      self.model = ft.finetune(self.model)
+      self.model = ft.finetune(self.model, X, y)
     
   def _predict_cpp(self, X):
     num_obs = len(X)

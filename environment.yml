@@ -16,4 +16,5 @@ dependencies:
     - pandas==1.5.0
     - setuptools==65.4.0
     - torch==1.12.1
+    - functorch==0.2.1
     - sympytorch==0.1.1
