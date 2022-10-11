@@ -2,12 +2,14 @@
 #define EVOLUTION_H
 
 #include <Python.h>
+#include <unordered_map>
 
 #include "util.hpp"
 #include "node.hpp"
 #include "variation.hpp"
 #include "selection.hpp"
 #include "fos.hpp"
+#include "complexity.hpp"
 #include "globals.hpp"
 
 struct Evolution {
@@ -17,6 +19,8 @@ struct Evolution {
   FOSBuilder * fb = NULL;
   int gen_number = 0;
 
+  unordered_map<float, Node*> elites_per_complexity;
+
   Evolution() {
     fb = new FOSBuilder();
   }
@@ -25,6 +29,10 @@ struct Evolution {
     clear_population(population);
     if (elite)
       elite->clear();
+    for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
+      it->second->clear();
+    }
+    elites_per_complexity.clear();
     if (fb)
       delete fb;
   }
@@ -48,6 +56,27 @@ struct Evolution {
   }
 
   bool check_n_set_elite(Node * tree) {
+
+    float c = compute_complexity(tree);
+
+    // replace elites
+    vector<float> obsolete_complexities; obsolete_complexities.reserve(elites_per_complexity.size());
+    for(auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
+      if (c <= it->first && tree->fitness < it->second->fitness) {
+        obsolete_complexities.push_back(it->first);
+      }
+    }
+    if (obsolete_complexities.empty()) {
+      // TODO return false;
+    }
+    for(float oc : obsolete_complexities) {
+      elites_per_complexity[oc]->clear();
+      elites_per_complexity.erase(oc);
+    }
+    elites_per_complexity[c] = tree->clone();
+    // TODO: return true;
+
+    // TODO: delete what follows
     if (!elite) {
       elite = tree->clone();
       return true;
@@ -145,6 +174,14 @@ struct Evolution {
     // if abs corr, append linear scaling terms
     if (g::fit_func->name() == "ac") {
       elite = append_linear_scaling(elite); 
+      for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
+        elites_per_complexity[it->first] = append_linear_scaling(it->second);
+      }
+    }
+
+    // TODO: remove this
+    for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
+      print(it->first, " ", it->second->fitness, ":", it->second->human_repr());
     }
 
     if (!g::_call_as_lib) {

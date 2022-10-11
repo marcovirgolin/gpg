@@ -12,16 +12,19 @@ def grav_law(X):
 
 y = grav_law(X)
 
-g = GPGRegressor(pop=128, g=10, d=5, fit="ac", fset="+,-,*,/", 
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import StandardScaler as SS
+
+X, y = load_diabetes(return_X_y=True)
+s = SS()
+X = s.fit_transform(X)
+
+g = GPGRegressor(pop=512, g=100, d=4, fit="ac", fset="+,-,*,/,log,cos", 
   nolink=True, s=4242, bs=128, 
   finetune=True)
 g.fit(X,y)
 print(g.model)
-p = g.predict(X, cpp=True)
-print(r2_score(y, p))
-print(np.mean(np.square(y-p)))
-
-p = g.predict(X, cpp=False)
+p = g.predict(X)
 print(r2_score(y, p))
 print(np.mean(np.square(y-p)))
 

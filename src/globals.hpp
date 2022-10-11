@@ -43,6 +43,7 @@ namespace g {
   Vec cumul_tset_probs;
   string lib_tset; // cached for later, when `fit` is called
   string lib_tset_probs; // cached for later, when `fit` is called
+  string complexity_type;
 
   // problem
   Fitness * fit_func = NULL;
@@ -55,7 +56,6 @@ namespace g {
   float cmut_eps = 1e-5;
   float cmut_prob = 0.0;
   float cmut_temp = 0.01;
-
 
   // selection
   int tournament_size = 2;
@@ -234,6 +234,7 @@ namespace g {
     parser.set_optional<string>("tset_probs", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
     parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
     parser.set_optional<string>("bs", "batch_size", "auto", "Batch size (default is 'auto', i.e., the entire training set)");
+    parser.set_optional<string>("compl", "complexity_type", "node_count", "Measure to score the complexity of candidate sotluions (default is node_count)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
@@ -316,6 +317,7 @@ namespace g {
       print("batch size: ",lib_batch_size);
     }
 
+
     // representation
     string fset = parser.get<string>("fset");
     set_functions(fset);
@@ -330,6 +332,9 @@ namespace g {
       set_terminal_probabilities(lib_tset_probs);
       print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs,")");
     } 
+
+    complexity_type = parser.get<string>("compl");
+    print("complexity type: ",complexity_type);
     
     // other
     cout << std::setprecision(NUM_PRECISION);

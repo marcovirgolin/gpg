@@ -302,6 +302,10 @@ Node * append_linear_scaling(Node * tree) {
   mul_n->append(tree);
   add_n->append(interc_n);
   add_n->append(mul_n);
+
+  // bring fitness info to new root
+  add_n->fitness = tree->fitness;
+
   return add_n;
 
 }
