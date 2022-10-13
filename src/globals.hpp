@@ -32,7 +32,7 @@ namespace g {
   int max_generations = 100000;
   int max_time = -1;
   int max_evaluations = -1;
-  long max_node_evaluations = -1;
+  long long max_node_evaluations = -1;
 
   // representation
   int max_depth;
@@ -44,6 +44,7 @@ namespace g {
   string lib_tset; // cached for later, when `fit` is called
   string lib_tset_probs; // cached for later, when `fit` is called
   string complexity_type;
+  float rel_compl_importance=0.0;
 
   // problem
   Fitness * fit_func = NULL;
@@ -56,6 +57,7 @@ namespace g {
   float cmut_eps = 1e-5;
   float cmut_prob = 0.0;
   float cmut_temp = 0.01;
+  bool t2fi = false;
 
   // selection
   int tournament_size = 2;
@@ -235,9 +237,11 @@ namespace g {
     parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
     parser.set_optional<string>("bs", "batch_size", "auto", "Batch size (default is 'auto', i.e., the entire training set)");
     parser.set_optional<string>("compl", "complexity_type", "node_count", "Measure to score the complexity of candidate sotluions (default is node_count)");
+    parser.set_optional<float>("rci", "rel_compl_imp", 0.0, "Relative importance of complexity over accuracy to select the final elite (default is 0.0)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
+    parser.set_optional<bool>("t2fi", "tournament_two_forced_improvement", true, "Whether to use tournament 2 as a forced improvement step after GOM");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
     parser.set_optional<int>("s", "seed", -1, "Random seed");
@@ -285,6 +289,10 @@ namespace g {
     
     // variation
     cmut_prob = parser.get<float>("cmp");
+    cmut_temp = parser.get<float>("cmt");
+    print("coefficient mutation probability: ", cmut_prob, ", temperature: ",cmut_temp);
+    t2fi = parser.get<bool>("t2fi");
+    print("tournament-2 forced improvement: ", t2fi ? "active" : "inactive");
 
     no_linkage = parser.get<bool>("nolink");
     print("compute linkage: ", no_linkage ? "false" : "true");
@@ -334,7 +342,9 @@ namespace g {
     } 
 
     complexity_type = parser.get<string>("compl");
-    print("complexity type: ",complexity_type);
+    rel_compl_importance = parser.get<float>("rci");
+    print("complexity type: ",complexity_type," (rel. importance: ",rel_compl_importance,")");
+    
     
     // other
     cout << std::setprecision(NUM_PRECISION);

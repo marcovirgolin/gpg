@@ -5,6 +5,7 @@
 #include "node.hpp"
 #include "operator.hpp"
 #include "util.hpp"
+#include "selection.hpp"
 
 #include <vector>
 
@@ -104,7 +105,6 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
           std = g::cmut_eps;
         float mutated_c = roundd(c * randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
-
       }
     }
   }
@@ -205,6 +205,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
 
   auto random_fos_order = rand_perm(fos.size());
 
+  bool ever_improved = false;
   for(int fos_idx = 0; fos_idx < fos.size(); fos_idx++) {
     
     auto crossover_mask = fos[random_fos_order[fos_idx]];
@@ -212,10 +213,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     vector<Op*> backup_ops; backup_ops.reserve(crossover_mask.size());
     vector<int> effectively_changed_indices; effectively_changed_indices.reserve(crossover_mask.size());
 
-    int where = randu()*population.size();
-    if (where >= population.size())
-      print("\t",population.size(), "idx:", where);
-    Node * donor = population[where];
+    Node * donor = population[randi(population.size())];
     vector<Node*> donor_nodes = donor->subtree();
 
     for(int & idx : crossover_mask) {
@@ -263,9 +261,10 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
         off_n->op = back_op->clone();
         offspring->fitness = backup_fitness;
       }
-    } else {
-      // retain
+    } else if (new_fitness < backup_fitness) {
+      // it improved
       backup_fitness = new_fitness;
+      ever_improved = true;
     }
 
     // discard backup
@@ -273,6 +272,15 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
       delete op;
     }
 
+  }
+
+  // variant of forced improvement that is less aggressive & less expensive
+  if(g::t2fi && !ever_improved) {
+    Node * contestant = population[randi(population.size())];
+    if (contestant->fitness < offspring->fitness) {
+      offspring->clear();
+      offspring = contestant->clone();
+    } 
   }
   
   return offspring;

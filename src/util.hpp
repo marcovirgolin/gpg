@@ -36,6 +36,20 @@ Vec roundd(Vec & x, int num_dec) {
   return (x * pow(10.0,num_dec)).round() / (float) pow(10.0,num_dec);
 }
 
+float median(Vec & x) {
+  int n = x.size();
+  if (n == 0) {
+    throw runtime_error("Attempted to get median of empty array");
+  }
+  if (n == 1) {
+    return x[0];
+  }
+  if (n % 2 == 0) {
+    return 0.5*(x[n/2]+x[n/2+1]);
+  } 
+  return x[n/2];
+}
+
 float corr(Vec & x, Vec & y) {
   float mean_x = x.mean();
   float mean_y = y.mean();

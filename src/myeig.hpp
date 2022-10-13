@@ -11,7 +11,6 @@ namespace myeig {
   typedef Eigen::ArrayXXf Mat;
   typedef Eigen::ArrayXf Vec;
   typedef Eigen::ArrayXi Veci;
-
 }
 
 #endif

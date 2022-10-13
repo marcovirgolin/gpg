@@ -93,6 +93,21 @@ struct Node {
     return h;
   }
 
+  int get_num_nodes(bool excl_introns=false) {
+    auto nodes = this->subtree();
+    int n = nodes.size();
+    if (!excl_introns) 
+      return n;
+
+    int num_introns = 0;
+    for(Node * n : nodes) {
+      if (n->is_intron()) {
+        num_introns++;
+      }
+    }
+    return n - num_introns;
+  }
+
   void _height_recursive(int & max_child_depth) {
     if (op->arity() == 0) {
       int d = this->depth();

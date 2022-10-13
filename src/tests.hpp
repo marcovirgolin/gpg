@@ -172,7 +172,7 @@ struct Test {
   }
 
   void converge() {
-    Evolution * e = new Evolution();
+    Evolution * e = new Evolution(0);
 
     // test a converged population
     vector<Node*> population; 

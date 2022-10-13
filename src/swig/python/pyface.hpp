@@ -1,13 +1,13 @@
 #include "../../util.hpp"
 #include "../../myeig.hpp"
 #include "../../globals.hpp"
-#include "../../evolution.hpp"
+#include "../../ims.hpp"
 
 
 using namespace std;
 
 Node * best = NULL;
-Evolution * evo = NULL;
+IMS * ims = NULL;
 
 pair<myeig::Mat, myeig::Vec> _assemble_Xy(double * X_n_y, int n_obs, int n_feats_plus_label) {
   myeig::Mat X(n_obs, n_feats_plus_label-1);
@@ -41,7 +41,7 @@ void setup(char * options) {
     argv[i] = (char*) opts[i-1].c_str();
   }
   g::read_options(argc, argv);
-  evo = new Evolution();
+  ims = new IMS();
 }
 
 void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
@@ -62,29 +62,47 @@ void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
     g::batch_size = stoi(g::lib_batch_size);
   }
   print("batch size: ",g::lib_batch_size);
-  // run evolution
-  evo->run();
+  // run ims
+  ims->run();
 }
 
 void predict(double * X_n_p, int n_obs, int n_feats_plus_one) {
-  if (!evo->elite) {
+  if (ims->elites_per_complexity.empty()) {
     throw runtime_error("Not fitted");
   }
   // assemble Mat
   myeig::Mat X = _assemble_Xy(X_n_p, n_obs, n_feats_plus_one).first;
 
+  // select elite
+  Node * elite = ims->select_elite(g::rel_compl_importance);
+
   // mock prediction
-  myeig::Vec prediction = evo->elite->get_output(X);
+  myeig::Vec prediction = elite->get_output(X);
   _include_prediction_back(prediction, X_n_p, n_feats_plus_one);
 
   return;
 }
 
 void model(char * model_str) {
-  if (!evo->elite) {
+  if (ims->elites_per_complexity.empty()) {
     throw runtime_error("Not fitted");
   }
-  string model_repr = evo->elite->human_repr();
+
+  Node * elite = ims->select_elite(g::rel_compl_importance);
+  string model_repr = elite->human_repr();
   sprintf(model_str, model_repr.c_str());
+  return;
+}
+
+void models(char * models_str) {
+  if (ims->elites_per_complexity.empty()) {
+    throw runtime_error("Not fitted");
+  }
+  string models_repr = "";
+  for (auto it = ims->elites_per_complexity.begin(); it != ims->elites_per_complexity.end(); it++) {
+    string model_repr = it->second->human_repr();
+    models_repr += model_repr + "\n";
+  }
+  sprintf(models_str, models_repr.c_str());
   return;
 }

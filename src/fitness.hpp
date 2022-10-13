@@ -10,6 +10,9 @@ using namespace myeig;
 
 struct Fitness {
 
+  int evaluations = 0;
+  long long node_evaluations = 0;
+
   virtual ~Fitness() {};
 
   Mat X_train, X_val, X_batch;
@@ -33,10 +36,16 @@ struct Fitness {
       X = & this->X_batch;
     if (!y)
       y = & this->y_batch;
+
+    // update evaluations
+    evaluations += 1;
+    node_evaluations += n->get_num_nodes(true); 
+
+    // call specific implementation
     return get_fitness(n, *X, *y);
   }
 
-  Vec get_fitnesses(vector<Node*> population, Mat * X=NULL, Vec * y=NULL, bool compute=true) {  
+  Vec get_fitnesses(vector<Node*> population, bool compute=true, Mat * X=NULL, Vec * y=NULL) {  
     Vec fitnesses(population.size());
     for(int i = 0; i < population.size(); i++) {
       if (compute)

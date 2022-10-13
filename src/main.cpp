@@ -4,6 +4,7 @@
 #include "myeig.hpp"
 #include "util.hpp"
 #include "evolution.hpp"
+#include "ims.hpp"
 #include "node.hpp"
 #include "tests.hpp"
 
@@ -16,8 +17,11 @@ int main(int argc, char** argv){
   t.run_all();
 
   auto start_time = tick();
-  auto evo = Evolution();
-  evo.run();
+  //auto evo = Evolution();
+  //evo.run();
+  auto * ims = new IMS();
+  ims->run();
+  delete ims;
   print("Runtime: ",tock(start_time),"s");
 
   g::clear_globals();
