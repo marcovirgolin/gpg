@@ -1,6 +1,6 @@
 import numpy as np
 from pygpg.sk import GPGRegressor
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
 
 np.random.seed(42)
 
@@ -12,23 +12,24 @@ def grav_law(X):
 
 y = grav_law(X)
 
-from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler as SS
 from sklearn.model_selection import train_test_split
 
-X, y = load_diabetes(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+X, y = load_boston(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=12)
 s = SS()
 X_train = s.fit_transform(X_train)
 X_test = s.transform(X_test)
 
 g = GPGRegressor(g=-1, e=1000000, d=5, fit="ac", fset="+,-,*,/,log,cos", 
-  s=4242, bs=X_train.shape[0], rci=0.1,
+  s=42, bs=X_train.shape[0], rci=0.1,
+  feat_sel=5,
   finetune=True)
 g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)
-print(r2_score(y_test, p))
+print(r2_score(y_test, p), mean_squared_error(y_test, p))
 
 
 """

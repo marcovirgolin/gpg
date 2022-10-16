@@ -19,7 +19,7 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
   optimizer = torch.optim.LBFGS(
     torch_model.parameters(), 
-    line_search_fn="strong_wolfe",
+    line_search_fn=None,
     lr=learning_rate,
     tolerance_grad=tol_grad, 
     tolerance_change=tol_change)
@@ -40,5 +40,5 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
         break
       prev_loss = loss_val
   
-  result = best_torch_model.sympy()[0]
+  result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
   return result

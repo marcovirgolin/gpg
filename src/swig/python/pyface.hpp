@@ -53,6 +53,7 @@ void fit(double * X_n_y, int n_obs, int n_feats_plus_label) {
   g::fit_func->set_Xy(X, y);
   // set terminals
   g::set_terminals(g::lib_tset);
+  g::apply_feature_selection(g::lib_feat_sel_number);
   g::set_terminal_probabilities(g::lib_tset_probs);
   print("terminal set: ",g::str_terminal_set()," (probs: ",g::lib_tset_probs,")");
   // batch size
@@ -94,7 +95,7 @@ void model(char * model_str) {
   return;
 }
 
-void models(char * models_str) {
+void models(char * model_str) {
   if (ims->elites_per_complexity.empty()) {
     throw runtime_error("Not fitted");
   }
@@ -103,6 +104,9 @@ void models(char * models_str) {
     string model_repr = it->second->human_repr();
     models_repr += model_repr + "\n";
   }
-  sprintf(models_str, models_repr.c_str());
+  // remove last "\n"
+  models_repr = models_repr.substr(0, models_repr.size()-1);
+
+  sprintf(model_str, models_repr.c_str());
   return;
 }

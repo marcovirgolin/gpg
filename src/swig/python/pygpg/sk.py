@@ -1,6 +1,6 @@
 from pygpg import pyface as _f
-from pygpg import conversion
-from pygpg import imputing
+from pygpg import conversion, imputing, complexity
+from sklearn.metrics import mean_squared_error
 import sys, os
 import numpy as np
 import sympy
@@ -21,6 +21,11 @@ class GPGRegressor():
     # to pass to c++
     s = ""
     for k in kwargs:
+      # python-also
+      if k in ["rci","compl"]:
+        self.k = kwargs[k]
+
+      # construct flag for c++ 
       if type(kwargs[k]) == bool:
         if kwargs[k] == True:
           s += f" -{k}"
@@ -42,12 +47,31 @@ class GPGRegressor():
 
     Xy = np.hstack((X, y.reshape((-1,1))))
     _f.fit(Xy)
+
     # extract the model as a sympy and store it internally
-    self.model = sympy.simplify(_f.model())
+    self.model = self._pick_best_model(X, y)
+    
+
+  def _pick_best_model(self, X, y):
+    # get all models from cpp
+    models = _f.models().split("\n")
+    models = [sympy.simplify(m) for m in models]
     # finetune  
     if self.finetune:
       import finetuning as ft
-      self.model = ft.finetune(self.model, X, y)
+      models = [ft.finetune(m, X, y) for m in models]
+
+    # pick best
+    errs = [mean_squared_error(y, self.predict(X, model=m)) for m in models]
+    if hasattr(self, "rci"):
+      complexity_metric = "node_count" if not hasattr(self, "compl") else self.compl
+      compls = [complexity.compute_complexity(m, complexity_metric) for m in models]
+      best_idx = complexity.determine_rci_best(errs, compls, self.rci)
+    else:
+      best_idx = np.argmin(errs)
+    
+    return models[best_idx]
+
     
   def _predict_cpp(self, X):
     num_obs = len(X)
@@ -56,13 +80,21 @@ class GPGRegressor():
     prediction = X_prime[:,X_prime.shape[1]-1]
     return prediction
 
-  def predict(self, X, cpp=False):
+  def predict(self, X, model=None, cpp=False):
     # add extra dimension to accomodate prediction
     if cpp:
       if self.finetune:
         raise ValueError("Cannot use cpp=True if finetuning has taken place")
+      if model is not None:
+        raise ValueError("Conflict: called predict from cpp but passing a sympy model")
       return self._predict_cpp(X)
-    f = conversion.sympy_to_numpy_fn(self.model)
+
+
+    if model is None:
+      # assume implicitly wanted the best one found at fit
+      model = self.model
+
+    f = conversion.sympy_to_numpy_fn(model)
 
     if np.isnan(X).any():
       assert(hasattr(self, "imputer"))

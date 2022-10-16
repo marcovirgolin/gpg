@@ -50,6 +50,25 @@ float median(Vec & x) {
   return x[n/2];
 }
 
+Veci sort_order(Vec & x) {
+  Veci indices(x.size());
+  for(int i = 0; i < x.size(); i++)
+    indices[i] = i;
+
+  sort(indices.begin(), indices.end(), [&](int i, int j) {return x[i] < x[j];});
+  
+  return indices;
+}
+
+Veci ranking(Vec & x) {
+  Veci o = sort_order(x);
+  Veci r(o.size());
+  for (int i = 0; i < o.size(); i++) {
+    r[o[i]] = i;
+  }
+  return r;
+}
+
 float corr(Vec & x, Vec & y) {
   float mean_x = x.mean();
   float mean_y = y.mean();
@@ -60,12 +79,44 @@ float corr(Vec & x, Vec & y) {
   float numerator = (res_x*res_y).sum();
   float denominator = sqrt(res_x.square().sum()) * sqrt(res_y.square().sum());
 
-  if (denominator == 0 || isnan(denominator) || isinf(abs(denominator))) 
+  if (denominator == 0 || isnan(denominator) || isinf(abs(denominator)))
     return 0;
 
   float result = denominator != 0 ? numerator / denominator : 0;
 
   return result;
+}
+
+float spearcorr(Vec & x, Vec & y) {
+  Veci r_x = ranking(x);
+  Veci r_y = ranking(y);
+  Vec r_x_f = r_x.cast<float>();
+  Vec r_y_f = r_y.cast<float>();
+  return corr(r_x_f, r_y_f);
+}
+
+int argmax(Vec & x) {
+  int idx = -1;
+  float best = NINF;
+  for(int i = 0; i < x.size(); i++) {
+    if (x[i] > best) {
+      best = x[i];
+      idx = i;
+    }
+  }
+  return idx;
+}
+
+int argmin(Vec & x) {
+  int idx = -1;
+  float best = INF;
+  for(int i = 0; i < x.size(); i++) {
+    if (x[i] < best) {
+      best = x[i];
+      idx = i;
+    }
+  }
+  return idx;
 }
 
 pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {

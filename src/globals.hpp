@@ -3,12 +3,13 @@
 
 #include <random>
 #include <chrono>
+#include <iomanip>
 #include <sstream>
 #include "myeig.hpp"
 #include "operator.hpp"
 #include "fitness.hpp"
 #include "cmdparser.hpp"
-#include <iomanip>
+#include "feature_selection.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -41,15 +42,16 @@ namespace g {
   vector<Op*> terminals;
   Vec cumul_fset_probs;
   Vec cumul_tset_probs;
-  string lib_tset; // cached for later, when `fit` is called
-  string lib_tset_probs; // cached for later, when `fit` is called
+  string lib_tset; // used when `fit` is called when using as lib
+  string lib_tset_probs; // used when `fit` is called when using as lib
   string complexity_type;
   float rel_compl_importance=0.0;
+  int lib_feat_sel_number = -1; // used when `fit` is called when using as lib
 
   // problem
   Fitness * fit_func = NULL;
   string path_to_training_set;
-  string lib_batch_size; // cached for later, when `fit` is called
+  string lib_batch_size; // used when `fit` is called when using as lib
   int batch_size;
 
   // variation
@@ -216,6 +218,56 @@ namespace g {
     return str;
   }
 
+  void apply_feature_selection(int num_feats_to_keep) {
+    // check if nothing needs to be done
+    if (num_feats_to_keep == -1) {
+      return;
+    }
+    int num_features = 0;
+    for(Op * o : terminals) {
+      if (o->type() == OpType::otFeat)
+        num_features++;
+    }
+    if (num_features <= num_feats_to_keep)
+      return;
+
+    // proceed with feature selection
+    Veci indices_to_keep = feature_selection(fit_func->X_train, fit_func->y_train, num_feats_to_keep);
+    vector<int> indices_to_remove; indices_to_remove.reserve(terminals.size());
+    for(int i = 0; i < terminals.size(); i++) {
+      Op * o = terminals[i];
+      if (o->type() != OpType::otFeat)
+        continue; // ignore constants
+      
+      auto end = indices_to_keep.data() + indices_to_keep.size();
+      if (find(indices_to_keep.data(), end, ((Feat*) o)->id) == end) {
+        indices_to_remove.push_back(i);
+      }
+    }
+
+    // remove those terminals from the search (from back to front not to screw up indexing)
+    for(int i = indices_to_remove.size() - 1; i >= 0; i--) {
+      int idx = indices_to_remove[i];
+      terminals.erase(terminals.begin() + idx);
+    }
+
+    // gotta update also prob of sampling terminals
+    if (lib_tset_probs != "auto") {
+      vector<string> prob_str = split_string(lib_tset_probs);
+      for(int i = indices_to_remove.size() - 1; i >= 0; i--) {
+        int idx = indices_to_remove[i];
+        prob_str.erase(prob_str.begin() + idx);
+      }
+      lib_tset_probs = "";
+      for(int i = 0; i < prob_str.size(); i++) {
+        lib_tset_probs += prob_str[i];
+        if (i < prob_str.size()-1)
+          lib_tset_probs += ",";
+      }
+    }
+
+  }
+
   void read_options(int argc, char** argv) {
     cli::Parser parser(argc, argv);
     
@@ -238,6 +290,7 @@ namespace g {
     parser.set_optional<string>("bs", "batch_size", "auto", "Batch size (default is 'auto', i.e., the entire training set)");
     parser.set_optional<string>("compl", "complexity_type", "node_count", "Measure to score the complexity of candidate sotluions (default is node_count)");
     parser.set_optional<float>("rci", "rel_compl_imp", 0.0, "Relative importance of complexity over accuracy to select the final elite (default is 0.0)");
+    parser.set_optional<int>("feat_sel", "feature_selection", 10, "Max. number of feature to consider (if -1, all features are considered)");
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
@@ -325,7 +378,6 @@ namespace g {
       print("batch size: ",lib_batch_size);
     }
 
-
     // representation
     string fset = parser.get<string>("fset");
     set_functions(fset);
@@ -334,11 +386,13 @@ namespace g {
     print("function set: ",fset," (probs: ",fset_p,")");
     
     lib_tset = parser.get<string>("tset");
+    lib_feat_sel_number = parser.get<int>("feat_sel");
     lib_tset_probs = parser.get<string>("tset_probs");
     if (!_call_as_lib) {
       set_terminals(lib_tset);
+      apply_feature_selection(lib_feat_sel_number);
       set_terminal_probabilities(lib_tset_probs);
-      print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs,")");
+      print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs, (lib_feat_sel_number > -1 ? ", feat.selection : "+to_string(lib_feat_sel_number) : ""), ")");
     } 
 
     complexity_type = parser.get<string>("compl");
