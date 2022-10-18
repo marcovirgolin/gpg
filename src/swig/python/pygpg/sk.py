@@ -94,6 +94,11 @@ class GPGRegressor():
       # assume implicitly wanted the best one found at fit
       model = self.model
 
+    # deal with a model that was simplified to a simple constant
+    if type(model) == sympy.Float:
+      prediction = np.array([float(model)]*X.shape[0])
+      return prediction
+
     f = conversion.sympy_to_numpy_fn(model)
 
     if np.isnan(X).any():
