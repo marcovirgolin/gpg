@@ -22,7 +22,7 @@ s = SS()
 X_train = s.fit_transform(X_train)
 X_test = s.transform(X_test)
 
-g = GPGRegressor(g=-1, e=1000000, d=5, fit="ac", fset="+,-,*,/,log,cos", 
+g = GPGRegressor(g=-1, disable_ims=True, tour=4, e=1000000, d=5, fit="ac", fset="+,-,*,/,log,cos", 
   s=42, bs=X_train.shape[0], rci=0.1,
   feat_sel=5,
   finetune=True)

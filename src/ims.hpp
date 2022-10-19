@@ -15,7 +15,6 @@ using namespace myeig;
 struct IMS {
 
   int MAX_POP_SIZE = (int) pow(2,20);
-  int BASE_POP_SIZE = 128;
   int SUB_GENs = 4;
 
   vector<Evolution*> evolutions;
@@ -77,16 +76,20 @@ struct IMS {
   }
 
   bool initialize_new_evolution() {
-    // If it is the first evolution
+    // if it is the first evolution
     int pop_size;
     if (evolutions.empty()) {
       evolutions.reserve(10);
-      pop_size = BASE_POP_SIZE;
+      pop_size = g::pop_size;
     } else {
       pop_size = evolutions[evolutions.size()-1]->population.size() * 2;
     }
     // skip if new pop.size is too large
     if (pop_size > MAX_POP_SIZE) {
+      return false;
+    }
+    // or skip if options set not to use IMS and we already have 1 evolution
+    if (g::disable_ims && evolutions.size() > 0) {
       return false;
     }
     Evolution * evo = new Evolution(pop_size);

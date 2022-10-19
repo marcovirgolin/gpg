@@ -29,11 +29,12 @@ namespace g {
   };
 
   // budget
-  int pop_size = 1000;
-  int max_generations = 100000;
-  int max_time = -1;
-  int max_evaluations = -1;
-  long long max_node_evaluations = -1;
+  int pop_size;
+  int max_generations;
+  int max_time;
+  int max_evaluations;
+  long long max_node_evaluations;
+  bool disable_ims = false;
 
   // representation
   int max_depth;
@@ -55,14 +56,14 @@ namespace g {
   int batch_size;
 
   // variation
-  bool no_linkage = false;
-  float cmut_eps = 1e-5;
-  float cmut_prob = 0.0;
-  float cmut_temp = 0.01;
-  bool t2fi = false;
+  bool no_linkage;
+  float cmut_eps;
+  float cmut_prob;
+  float cmut_temp;
+  bool tourfi;
 
   // selection
-  int tournament_size = 2;
+  int tournament_size;
   bool tournament_stochastic = false;
 
   // other
@@ -277,9 +278,10 @@ namespace g {
     parser.set_optional<int>("t", "time", -1, "Budget of time (-1 for disabled)");
     parser.set_optional<int>("e", "evaluations", -1, "Budget of evaluations (-1 for disabled)");
     parser.set_optional<long>("ne", "node evaluations", -1, "Budget of node evaluations (-1 for disabled)");
+    parser.set_optional<bool>("disable_ims", "disable_ims", false, "Whether to disable the IMS (default is false)");
     // initialization
     parser.set_optional<string>("is", "initialization_strategy", "hh", "Strategy to sample the initial population");
-    parser.set_optional<int>("d", "depth", 4, "Maximum depth trees can have");
+    parser.set_optional<int>("d", "depth", 4, "Maximum depth that the trees can have");
     // problem
     parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
     parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
@@ -294,7 +296,8 @@ namespace g {
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
-    parser.set_optional<bool>("t2fi", "tournament_two_forced_improvement", true, "Whether to use tournament 2 as a forced improvement step after GOM");
+    parser.set_optional<bool>("tourfi", "tournament_forced_improvement", true, "Whether to use tournament selection as a forced improvement step after GOM");
+    parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
     parser.set_optional<int>("s", "seed", -1, "Random seed");
@@ -320,9 +323,15 @@ namespace g {
     }
     
     // budget
-    pop_size = parser.get<int>("pop");
-    print("pop. size: ",pop_size);
-
+    disable_ims = parser.get<bool>("disable_ims");
+    if (disable_ims) {
+      pop_size = parser.get<int>("pop");
+      print("pop. size: ",pop_size);
+    } else {
+      pop_size = 64;
+      print("IMS active");
+    }
+   
     max_generations = parser.get<int>("g");
     max_time = parser.get<int>("t");
     max_evaluations = parser.get<int>("e");
@@ -344,8 +353,10 @@ namespace g {
     cmut_prob = parser.get<float>("cmp");
     cmut_temp = parser.get<float>("cmt");
     print("coefficient mutation probability: ", cmut_prob, ", temperature: ",cmut_temp);
-    t2fi = parser.get<bool>("t2fi");
-    print("tournament-2 forced improvement: ", t2fi ? "active" : "inactive");
+    tourfi = parser.get<bool>("tourfi");
+    print("tournament-based forced improvement: ", tourfi ? "active" : "inactive");
+    tournament_size = parser.get<int>("tour");
+    print("tournament size (if active): ", tournament_size);
 
     no_linkage = parser.get<bool>("nolink");
     print("compute linkage: ", no_linkage ? "false" : "true");

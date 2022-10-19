@@ -274,13 +274,17 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
 
   }
 
-  // variant of forced improvement that is less aggressive & less expensive
-  if(g::t2fi && !ever_improved) {
-    Node * contestant = population[randi(population.size())];
-    if (contestant->fitness < offspring->fitness) {
-      offspring->clear();
-      offspring = contestant->clone();
-    } 
+  // variant of forced improvement that is potentially less aggressive, & less expensive to carry out
+  if(g::tourfi && !ever_improved) {
+    // make a tournament between tournament size - 1 candidates + offspring
+    vector<Node*> tournament_candidates; tournament_candidates.reserve(g::tournament_size - 1);
+    for(int i = 0; i < g::tournament_size - 1; i++) {
+      tournament_candidates.push_back(population[randi(population.size())]);
+    }
+    tournament_candidates.push_back(offspring);
+    Node * winner = tournament(tournament_candidates, g::tournament_size);
+    offspring->clear();
+    offspring = winner;
   }
   
   return offspring;
