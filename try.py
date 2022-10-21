@@ -1,6 +1,8 @@
 import numpy as np
 from pygpg.sk import GPGRegressor
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV
+from sklearn.base import clone
 
 np.random.seed(42)
 
@@ -22,10 +24,8 @@ s = SS()
 X_train = s.fit_transform(X_train)
 X_test = s.transform(X_test)
 
-g = GPGRegressor(g=-1, disable_ims=True, tour=4, e=1000000, d=5, fit="ac", fset="+,-,*,/,log,cos", 
-  s=42, bs=X_train.shape[0], rci=0.1,
-  feat_sel=5,
-  finetune=True)
+g = GPGRegressor(t=-1, g=-1, e=1000000, fset="+,-,*,/,cos,log", 
+  rci=0.0, finetune=True, verbose=True, random_state=42)
 g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)

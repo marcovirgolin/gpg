@@ -19,8 +19,9 @@ namespace g {
   // ALL operators
   vector<Op*> all_operators = {
     new Add(), new Sub(), new Neg(), new Mul(), new Div(), new Inv(), 
+    new Sqrt(),
     new Sin(), new Cos(), 
-    new Log()
+    new Log(),
   };
 
   // ALL fitness functions 
@@ -271,13 +272,13 @@ namespace g {
 
   void read_options(int argc, char** argv) {
     cli::Parser parser(argc, argv);
-    
+
     // budget
     parser.set_optional<int>("pop", "population_size", 1000, "Population size");
     parser.set_optional<int>("g", "generations", 20, "Budget of generations (-1 for disabled)");
     parser.set_optional<int>("t", "time", -1, "Budget of time (-1 for disabled)");
     parser.set_optional<int>("e", "evaluations", -1, "Budget of evaluations (-1 for disabled)");
-    parser.set_optional<long>("ne", "node evaluations", -1, "Budget of node evaluations (-1 for disabled)");
+    parser.set_optional<long>("ne", "node_evaluations", -1, "Budget of node evaluations (-1 for disabled)");
     parser.set_optional<bool>("disable_ims", "disable_ims", false, "Whether to disable the IMS (default is false)");
     // initialization
     parser.set_optional<string>("is", "initialization_strategy", "hh", "Strategy to sample the initial population");
@@ -300,10 +301,10 @@ namespace g {
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
-    parser.set_optional<int>("s", "seed", -1, "Random seed");
+    parser.set_optional<int>("random_state", "random_state", -1, "Random seed");
     parser.set_optional<bool>("verbose", "verbose", false, "Verbose");
     parser.set_optional<bool>("lib", "call_as_lib", false, "Whether the code is called as a library (e.g., from Python)");
-    
+
     // set options
     parser.run_and_exit_if_error();
 
@@ -314,7 +315,7 @@ namespace g {
     }
 
     // seed
-    seed = parser.get<int>("s");
+    seed = parser.get<int>("random_state");
     if (seed > 0){
       srand((unsigned int) seed);
       print("seed: ", seed);
@@ -394,7 +395,7 @@ namespace g {
     set_functions(fset);
     string fset_p = parser.get<string>("fset_probs");
     set_function_probabilities(fset_p);
-    print("function set: ",fset," (probs: ",fset_p,")");
+    print("function set: ",fset," (probabs: ",fset_p,")");
     
     lib_tset = parser.get<string>("tset");
     lib_feat_sel_number = parser.get<int>("feat_sel");
@@ -403,7 +404,7 @@ namespace g {
       set_terminals(lib_tset);
       apply_feature_selection(lib_feat_sel_number);
       set_terminal_probabilities(lib_tset_probs);
-      print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs, (lib_feat_sel_number > -1 ? ", feat.selection : "+to_string(lib_feat_sel_number) : ""), ")");
+      print("terminal set: ",str_terminal_set()," (probabs: ",lib_tset_probs, (lib_feat_sel_number > -1 ? ", feat.selection : "+to_string(lib_feat_sel_number) : ""), ")");
     } 
 
     complexity_type = parser.get<string>("compl");

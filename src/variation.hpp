@@ -28,7 +28,7 @@ Op * _sample_terminal() {
   return _sample_operator(g::terminals, g::cumul_tset_probs);
 }
 
-Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.5) {
+Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_left, int curr_depth, float terminal_prob=.25) {
   Node * n = NULL;
 
   if (max_depth_left > 0) {

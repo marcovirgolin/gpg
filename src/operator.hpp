@@ -267,6 +267,29 @@ struct Log : Fun {
 
 };
 
+struct Sqrt : Fun {
+
+  Op * clone() override {
+    return new Sqrt();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "sqrt";
+  }
+
+  Vec apply(Mat & X) override {
+    // Log of x < 0 is undefined (and =0 is -inf) thus convert to NAN
+    Vec x = X.col(0);
+    replace(x, 0, NAN, "<");
+    return x.sqrt();
+  }
+
+};
+
 struct Feat : Term {
 
   int id;

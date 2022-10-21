@@ -1,41 +1,62 @@
 from pygpg import pyface as _f
 from pygpg import conversion, imputing, complexity
 from sklearn.metrics import mean_squared_error
+from sklearn.base import BaseEstimator, RegressorMixin
 import sys, os
+import inspect
 import numpy as np
 import sympy
 
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pygpg'))
 
-class GPGRegressor():
+class GPGRegressor(BaseEstimator, RegressorMixin):
 
-  def __init__(self, verbose=True, **kwargs):
-    # python-only
-    self.finetune = False
-    if "finetune" in kwargs:
-      if kwargs["finetune"] == True:
-        self.finetune = True
-      del kwargs["finetune"]
+  def __init__(self, **kwargs):
+    # store parameters internally
+    for k in kwargs:
+      setattr(self, k, kwargs[k])
 
-    # to pass to c++
+    self.set_params_cpp(kwargs)
+  
+  def set_params_cpp(self, kwargs):
+    # build string
     s = ""
     for k in kwargs:
-      # python-also
-      if k in ["rci","compl"]:
-        self.k = kwargs[k]
+      # skip python-only params
+      if k == "finetune":
+        continue
 
-      # construct flag for c++ 
+      # handle bool flags for c++ 
       if type(kwargs[k]) == bool:
         if kwargs[k] == True:
           s += f" -{k}"
       else:
         s += f" -{k} {kwargs[k]}"
+    # add "lib" flag to differntiate from CLI calls
     s = s[1:] + " -lib"
-    if verbose:
-      s += " -verbose"
-      
+
+    # pass string to cpp for internal setup
     _f.setup(s)
+
+
+  def get_params(self, deep=True):
+    attributes = inspect.getmembers(self, lambda a:not(inspect.isroutine(a)))
+    attributes = [a for a in attributes if '_' not in a[0]]
+
+    dic = {}
+    for a in attributes:
+      dic[a[0]] = a[1]
+
+    return dic
+
+  def set_params(self, **parameters):
+    for parameter, value in parameters.items():
+      setattr(self, parameter, value)
+
+    self.set_params_cpp(parameters)
+
+    return self
 
 
   def fit(self, X, y):
@@ -57,7 +78,7 @@ class GPGRegressor():
     models = _f.models().split("\n")
     models = [sympy.simplify(m) for m in models]
     # finetune  
-    if self.finetune:
+    if hasattr(self, "finetune") and self.finetune:
       import finetuning as ft
       models = [ft.finetune(m, X, y) for m in models]
 
@@ -83,7 +104,7 @@ class GPGRegressor():
   def predict(self, X, model=None, cpp=False):
     # add extra dimension to accomodate prediction
     if cpp:
-      if self.finetune:
+      if hasattr(self, "finetune") and self.finetune:
         raise ValueError("Cannot use cpp=True if finetuning has taken place")
       if model is not None:
         raise ValueError("Conflict: called predict from cpp but passing a sympy model")

@@ -15,7 +15,11 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
       y = torch.tensor(y) 
 
   expr_vars = set(re.findall(r'\bx_[0-9]+', str(sympy_model)))
-  torch_model = C.sympy_to_torch(sympy_model)
+  try:
+    torch_model = C.sympy_to_torch(sympy_model)
+  except TypeError:
+    print("Invalid conversion from sympy to torch during fine-tuning")
+    return sympy_model
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
   optimizer = torch.optim.LBFGS(
     torch_model.parameters(), 
@@ -27,7 +31,11 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
   prev_loss = np.infty
   for _ in range(n_steps):
       optimizer.zero_grad()
-      p = torch_model(**x_args).squeeze(-1)
+      try:
+        p = torch_model(**x_args).squeeze(-1)
+      except TypeError:
+        print("Error during forward call of torch model while fine-tuning")
+        return sympy_model
       loss = (p-y).pow(2).mean().div(2)
       loss.retain_grad()
       loss.backward()
