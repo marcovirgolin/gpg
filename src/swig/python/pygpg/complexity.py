@@ -15,8 +15,8 @@ def determine_rci_best(errors, complexities, rci=0.1) -> int:
   min_c, max_c = min(complexities), max(complexities)
   rang_c = max_c - min_c
 
-  rel_accuracies = [(e - min_e)/rang_e for e in errors]
-  rel_simplicities = [(c - min_c)/rang_c for c in complexities]
+  rel_accuracies = [1.0-(e - min_e)/rang_e for e in errors]
+  rel_simplicities = [1.0-(c - min_c)/rang_c for c in complexities]
 
   best_score = -np.inf
   best_idx = None
