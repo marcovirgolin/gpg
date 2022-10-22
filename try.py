@@ -2,7 +2,6 @@ import numpy as np
 from pygpg.sk import GPGRegressor
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV
-from sklearn.base import clone
 
 np.random.seed(42)
 
@@ -24,11 +23,31 @@ s = SS()
 X_train = s.fit_transform(X_train)
 X_test = s.transform(X_test)
 
-g = GPGRegressor(t=-1, g=-1, e=1000000, fset="+,-,*,/,cos,log", 
-  rci=0.0, finetune=True, verbose=True, random_state=42)
+
+from sklearn.base import clone
+
+g = GPGRegressor(t=-1, g=2, e=-1, fset="+,-,*,/,cos,log", 
+  rci=0.1, finetune=False, verbose=True, random_state=42)
 g.fit(X_train,y_train)
-print(g.model)
-p = g.predict(X_test)
+g = clone(g)
+g.fit(X_train,y_train)
+#print(g.model)
+#p = g.predict(X_test)
+#print(r2_score(y_test, p), mean_squared_error(y_test, p))
+from sklearn.experimental import enable_halving_search_cv # noqa
+from sklearn.model_selection import GridSearchCV
+
+g = clone(g)
+hyper_params = [
+    {
+      'rci' : (0.0,), 'cmp' : (0.1,), 'verbose' : (True,)
+    },
+]
+grid_est = GridSearchCV(g, param_grid=hyper_params, cv=3,
+                verbose=2, n_jobs=1, scoring='r2', error_score=0.0)
+
+grid_est.fit(X_train, y_train)
+p = grid_est.predict(X_test)
 print(r2_score(y_test, p), mean_squared_error(y_test, p))
 
 

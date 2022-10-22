@@ -1,4 +1,4 @@
-from pygpg import pyface as _f
+from pygpg.pyface import GPGPyFace
 from pygpg import conversion, imputing, complexity
 from sklearn.metrics import mean_squared_error
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -17,14 +17,13 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for k in kwargs:
       setattr(self, k, kwargs[k])
 
-    self.set_params_cpp(kwargs)
-  
-  def set_params_cpp(self, kwargs):
-    # build string
+  def init_cpp(self):
+    # build string of options for cpp
+    kwargs = self.get_params()
     s = ""
     for k in kwargs:
       # skip python-only params
-      if k == "finetune":
+      if k in ["finetune", "model", "_gpg_cpp"]:
         continue
 
       # handle bool flags for c++ 
@@ -33,16 +32,21 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
           s += f" -{k}"
       else:
         s += f" -{k} {kwargs[k]}"
+
     # add "lib" flag to differntiate from CLI calls
     s = s[1:] + " -lib"
 
-    # pass string to cpp for internal setup
-    _f.setup(s)
+    # init cpp interface object
+    # & pass options for internal setup
+    self._gpg_cpp = GPGPyFace()
+    self._gpg_cpp.setup(s)
 
 
   def get_params(self, deep=True):
     attributes = inspect.getmembers(self, lambda a:not(inspect.isroutine(a)))
-    attributes = [a for a in attributes if '_' not in a[0]]
+    attributes = [x for x in attributes if not 
+      ((x[0].startswith("__") and x[0].endswith("__")) or 
+      x[0] in ["_estimator_type", "_gpg_cpp"])]
 
     dic = {}
     for a in attributes:
@@ -51,15 +55,17 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     return dic
 
   def set_params(self, **parameters):
+    print("set params called")
     for parameter, value in parameters.items():
       setattr(self, parameter, value)
-
-    self.set_params_cpp(parameters)
 
     return self
 
 
   def fit(self, X, y):
+
+    self.init_cpp()
+
     # impute if needed
     if np.isnan(X).any():
       self.imputer, X = imputing.fit_and_apply_imputation(X)
@@ -67,7 +73,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       X = X.copy()
 
     Xy = np.hstack((X, y.reshape((-1,1))))
-    _f.fit(Xy)
+    self._gpg_cpp.fit(Xy)
 
     # extract the model as a sympy and store it internally
     self.model = self._pick_best_model(X, y)
@@ -75,7 +81,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
   def _pick_best_model(self, X, y):
     # get all models from cpp
-    models = _f.models().split("\n")
+    models = self._gpg_cpp.models().split("\n")
     models = [sympy.simplify(m) for m in models]
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
@@ -97,7 +103,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
   def _predict_cpp(self, X):
     num_obs = len(X)
     X_prime = np.hstack((X, np.zeros(num_obs).reshape((-1,1))))
-    _f.predict(X_prime)
+    self._gpg_cpp.predict(X_prime)
     prediction = X_prime[:,X_prime.shape[1]-1]
     return prediction
 
@@ -109,7 +115,6 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       if model is not None:
         raise ValueError("Conflict: called predict from cpp but passing a sympy model")
       return self._predict_cpp(X)
-
 
     if model is None:
       # assume implicitly wanted the best one found at fit

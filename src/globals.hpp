@@ -68,7 +68,7 @@ namespace g {
   bool tournament_stochastic = false;
 
   // other
-  int seed = -1;
+  int random_state = -1;
   bool verbose = true;
   bool _call_as_lib = false;
 
@@ -301,7 +301,7 @@ namespace g {
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
-    parser.set_optional<int>("random_state", "random_state", -1, "Random seed");
+    parser.set_optional<int>("random_state", "random_state", -1, "Random state (seed)");
     parser.set_optional<bool>("verbose", "verbose", false, "Verbose");
     parser.set_optional<bool>("lib", "call_as_lib", false, "Whether the code is called as a library (e.g., from Python)");
 
@@ -314,13 +314,13 @@ namespace g {
       cout.rdbuf(NULL);
     }
 
-    // seed
-    seed = parser.get<int>("random_state");
-    if (seed > 0){
-      srand((unsigned int) seed);
-      print("seed: ", seed);
+    // random_state
+    random_state = parser.get<int>("random_state");
+    if (random_state > 0){
+      srand((unsigned int) random_state);
+      print("random state: ", random_state);
     } else {
-      print("seed: not set");
+      print("random state: not set");
     }
     
     // budget
