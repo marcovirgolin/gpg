@@ -284,7 +284,7 @@ namespace g {
     parser.set_optional<string>("is", "initialization_strategy", "hh", "Strategy to sample the initial population");
     parser.set_optional<int>("d", "depth", 4, "Maximum depth that the trees can have");
     // problem
-    parser.set_optional<string>("fit", "fitness_function", "ac", "Fitness function");
+    parser.set_optional<string>("ff", "fitness_function", "ac", "Fitness function");
     parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
     parser.set_optional<string>("fset_probs", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
     parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
@@ -363,7 +363,7 @@ namespace g {
     print("compute linkage: ", no_linkage ? "false" : "true");
 
     // problem
-    string fit_func_name = parser.get<string>("fit");
+    string fit_func_name = parser.get<string>("ff");
     set_fit_func(fit_func_name);
     print("fitness function: ", fit_func_name);
 

@@ -26,21 +26,21 @@ X_test = s.transform(X_test)
 
 from sklearn.base import clone
 
-g = GPGRegressor(t=-1, g=2, e=-1, fset="+,-,*,/,cos,log", 
+g = GPGRegressor(t=7200, g=-1, e=1000, fset="+,-,*,/,cos,log", ff="ac",
   rci=0.1, finetune=False, verbose=True, random_state=42)
 g.fit(X_train,y_train)
-g = clone(g)
-g.fit(X_train,y_train)
-#print(g.model)
-#p = g.predict(X_test)
-#print(r2_score(y_test, p), mean_squared_error(y_test, p))
+print(g.model)
+p = g.predict(X_test)
+print(r2_score(y_test, p), mean_squared_error(y_test, p))
+
+
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import GridSearchCV
 
 g = clone(g)
 hyper_params = [
     {
-      'rci' : (0.0,), 'cmp' : (0.1,), 'verbose' : (True,)
+      'cmp': (0.1,), 'd': (5,), 'e': (10000,), 'feat_sel': (10,), 'fset': ('+,-,*,/,log,cos,sqrt',), 'g': (-1,), 'random_state': (23654,), 'rci': (0.1,), 't': (7200,)
     },
 ]
 grid_est = GridSearchCV(g, param_grid=hyper_params, cv=3,

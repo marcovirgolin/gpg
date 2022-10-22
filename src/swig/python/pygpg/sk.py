@@ -55,7 +55,6 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     return dic
 
   def set_params(self, **parameters):
-    print("set params called")
     for parameter, value in parameters.items():
       setattr(self, parameter, value)
 
@@ -82,7 +81,11 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
   def _pick_best_model(self, X, y):
     # get all models from cpp
     models = self._gpg_cpp.models().split("\n")
+    # simplify
     models = [sympy.simplify(m) for m in models]
+    # replace bad symbols with 1.0 (arbitrary)
+    models = [m.replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0)) for m in models]
+
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
       import finetuning as ft
