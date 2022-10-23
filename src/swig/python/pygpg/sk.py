@@ -82,7 +82,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     # get all models from cpp
     models = self._gpg_cpp.models().split("\n")
     # simplify
-    models = [sympy.simplify(m) for m in models]
+    models = [sympy.simplify(m, ratio=1.0) for m in models]
     # replace bad symbols with 1.0 (arbitrary)
     models = [m.replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0)) for m in models]
 
@@ -124,7 +124,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       model = self.model
 
     # deal with a model that was simplified to a simple constant
-    if type(model) == sympy.Float:
+    if type(model) == sympy.Float or type(model) == sympy.Integer:
       prediction = np.array([float(model)]*X.shape[0])
       return prediction
 
@@ -135,4 +135,10 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       X = self.imputer.transform(X)
 
     prediction = f(X)
+    
+    # can still happen for certain classes of sympy 
+    # (e.g., sympy.core.numbers.Zero)
+    if type(prediction) == int or type(prediction) == float:
+      prediction = np.array([float(prediction)]*X.shape[0])
+
     return prediction

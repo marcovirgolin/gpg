@@ -56,6 +56,10 @@ struct Fun : Op {
     return this->sym()+ "( " + args[0] + " )";
   }
 
+  string _human_repr_unary_after(vector<string> & args) {
+    return "( " + args[0] + " )" + this->sym();
+  }
+
   string _human_repr_common(vector<string> & args) {
     if (arity() == 2) {
       return _human_repr_binary_between(args);
@@ -282,13 +286,64 @@ struct Sqrt : Fun {
   }
 
   Vec apply(Mat & X) override {
-    // Log of x < 0 is undefined (and =0 is -inf) thus convert to NAN
+    // Sqrt of x < 0 is undefined, thus convert to NAN
     Vec x = X.col(0);
     replace(x, 0, NAN, "<");
     return x.sqrt();
   }
 
 };
+
+struct Square : Fun {
+
+  Op * clone() override {
+    return new Square();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "**2";
+  }
+
+  string human_repr(vector<string> & args) override {
+    return _human_repr_unary_after(args);
+  }
+
+  Vec apply(Mat & X) override {
+    Vec x = X.col(0);
+    return x.square();
+  }
+
+};
+
+struct Cube : Fun {
+
+  Op * clone() override {
+    return new Cube();
+  }
+
+  int arity() override {
+    return 1;
+  }
+
+  string sym() override {
+    return "**3";
+  }
+
+  string human_repr(vector<string> & args) override {
+    return _human_repr_unary_after(args);
+  }
+
+  Vec apply(Mat & X) override {
+    Vec x = X.col(0);
+    return x.cube();
+  }
+
+};
+
 
 struct Feat : Term {
 

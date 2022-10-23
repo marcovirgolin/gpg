@@ -19,7 +19,7 @@ namespace g {
   // ALL operators
   vector<Op*> all_operators = {
     new Add(), new Sub(), new Neg(), new Mul(), new Div(), new Inv(), 
-    new Sqrt(),
+    new Square(), new Sqrt(), new Cube(),
     new Sin(), new Cos(), 
     new Log(),
   };
