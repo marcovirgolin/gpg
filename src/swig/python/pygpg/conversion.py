@@ -1,5 +1,10 @@
-import sympy, torch, sympytorch
+import sympy, sympytorch
 from functools import partial
+from stopit import threading_timeoutable as timeoutable
+
+@timeoutable()
+def timed_simplify(model, ratio=1.0):
+  return sympy.simplify(model)
 
 
 """

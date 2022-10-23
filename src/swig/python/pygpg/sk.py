@@ -79,12 +79,23 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     
 
   def _pick_best_model(self, X, y):
-    # get all models from cpp
+    # get all models from cpp 
     models = self._gpg_cpp.models().split("\n")
-    # simplify
-    models = [sympy.simplify(m, ratio=1.0) for m in models]
+
+    # simplify (with stopping)
+    simplified_models = list()
+    for m in models:
+      simpl_m = conversion.timed_simplify(m, ratio=1.0, timeout=5)
+      if simpl_m is None:
+        simpl_m = sympy.sympify(m) # do not simplify, just sympify
+      simplified_models.append(simpl_m)
+    # proceed with simplified models  
+    models = simplified_models
+
     # replace bad symbols with 1.0 (arbitrary)
-    models = [m.replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0)) for m in models]
+    s_inf = sympy.Symbol("inf")
+    models = [m.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0))
+      for m in models]
 
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
@@ -92,7 +103,20 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       models = [ft.finetune(m, X, y) for m in models]
 
     # pick best
-    errs = [mean_squared_error(y, self.predict(X, model=m)) for m in models]
+    errs = list()
+    max_err = 0
+    for m in models:
+      p = self.predict(X, model=m)
+      if np.isnan(p).any():
+        err = "nan"
+      else:
+        err = mean_squared_error(y, p)
+        if err > max_err:
+          max_err = err
+      errs.append(err)
+    # adjust errs
+    errs = [err if err != "nan" else max_err + 1e-6 for err in errs]
+
     if hasattr(self, "rci"):
       complexity_metric = "node_count" if not hasattr(self, "compl") else self.compl
       compls = [complexity.compute_complexity(m, complexity_metric) for m in models]

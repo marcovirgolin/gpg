@@ -263,7 +263,7 @@ struct Log : Fun {
   }
 
   Vec apply(Mat & X) override {
-    // Log of x < 0 is undefined (and =0 is -inf) thus convert to NAN
+    // Log of x < 0 is undefined and log of 0 is -inf, thus convert to NAN
     Vec x = X.col(0);
     replace(x, 0, NAN, "<=");
     return x.log();
