@@ -9,10 +9,11 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
   tol_grad=1e-7, tol_change=1e-9):
 
   best_torch_model, best_loss = None, np.infty
+
   if not isinstance(X, torch.TensorType):
       X = torch.tensor(X)
   if not isinstance(y, torch.TensorType):
-      y = torch.tensor(y) 
+      y = torch.tensor(y.reshape((-1,))) 
 
   expr_vars = set(re.findall(r'\bx_[0-9]+', str(sympy_model)))
   try:

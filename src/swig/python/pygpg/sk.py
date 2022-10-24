@@ -62,7 +62,6 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
 
   def fit(self, X, y):
-
     self.init_cpp()
 
     # impute if needed
@@ -79,6 +78,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     
 
   def _pick_best_model(self, X, y):
+
     # get all models from cpp 
     models = self._gpg_cpp.models().split("\n")
 
@@ -94,7 +94,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
     # replace bad symbols with 1.0 (arbitrary)
     s_inf = sympy.Symbol("inf")
-    models = [m.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0))
+    models = [m.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0)).replace(sympy.nan, sympy.Float(1.0))
       for m in models]
 
     # finetune  
