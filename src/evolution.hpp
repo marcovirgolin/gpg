@@ -39,9 +39,20 @@ struct Evolution {
   }
 
   void init_pop() {
+    unordered_set<string> already_generated;
     population.reserve(pop_size);
-    for(int i = 0; i < pop_size; i++) {
+    int init_attempts = 0;
+    while (population.size() < pop_size) {
       auto * tree = generate_tree(g::max_depth, g::init_strategy);
+      string str_tree = tree->str_subtree();
+      if (init_attempts < g::max_init_attempts && already_generated.find(str_tree) != already_generated.end()) {
+        init_attempts++;
+        if (init_attempts == g::max_init_attempts) {
+          print("Warning: could not initialize a syntactically-unique population within ", init_attempts, " attempts");
+        }
+        continue;
+      } 
+      already_generated.insert(str_tree);
       g::fit_func->get_fitness(tree);
       population.push_back(tree);
     }

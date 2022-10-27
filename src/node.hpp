@@ -171,7 +171,7 @@ struct Node {
     return (op->apply(C) * pow(10.0, NUM_PRECISION)) / (float) pow(10.0,NUM_PRECISION);
   }
 
-  void print_subtree() {
+  string str_subtree() {
     vector<Node*> nodes = this->subtree();
     string str = "[";
     for(Node * n : nodes) {
@@ -179,6 +179,11 @@ struct Node {
     }
     str.erase(str.end()-2, str.end());
     str += "]";
+    return str;
+  }
+
+  void print_subtree() {
+    string str = str_subtree();
     print(str);
   }
 

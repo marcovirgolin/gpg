@@ -57,10 +57,14 @@ namespace g {
   int batch_size;
 
   // variation
+  int max_init_attempts = 10000;
   bool no_linkage;
   float cmut_eps;
   float cmut_prob;
   float cmut_temp;
+  bool no_large_subsets=false;
+  bool no_univariate=false;
+  bool no_univariate_except_leaves=false;
 
   // selection
   int tournament_size;
@@ -297,7 +301,7 @@ namespace g {
     // initialization
     parser.set_optional<string>("is", "initialization_strategy", "hh", "Strategy to sample the initial population");
     parser.set_optional<int>("d", "depth", 4, "Maximum depth that the trees can have");
-    // problem
+    // problem & representation
     parser.set_optional<string>("ff", "fitness_function", "ac", "Fitness function");
     parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
     parser.set_optional<string>("fset_probs", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
@@ -313,6 +317,9 @@ namespace g {
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
+    parser.set_optional<bool>("no_large_fos", "no_large_fos", false, "Whether to discard subsets in the FOS with size > half the size of the genotype (default is false)");
+    parser.set_optional<bool>("no_univ_fos", "no_univ_fos", false, "Whether to discard univariate subsets in the FOS (default is false)");
+    parser.set_optional<bool>("no_univ_exc_leaves_fos", "no_univ_exc_leaves_fos", false, "Whether to discard univariate subsets except for those that refer to leaves in the FOS (default is false)");
     // other
     parser.set_optional<int>("random_state", "random_state", -1, "Random state (seed)");
     parser.set_optional<bool>("verbose", "verbose", false, "Verbose");
@@ -371,7 +378,10 @@ namespace g {
     print("tournament size: ", tournament_size);
 
     no_linkage = parser.get<bool>("nolink");
-    print("compute linkage: ", no_linkage ? "false" : "true");
+    no_large_subsets = parser.get<bool>("no_large_fos");
+    no_univariate = parser.get<bool>("no_univ_fos");
+    no_univariate_except_leaves = parser.get<bool>("no_univ_exc_leaves_fos");
+    print("compute linkage: ", no_linkage ? "false" : "true", " (FOS trimming-no large: ",no_large_subsets,", no univ.: ",no_univariate,", no. univ. exc. leaves: ",no_univariate_except_leaves,")");
 
     // problem
     string fit_func_name = parser.get<string>("ff");
@@ -421,6 +431,8 @@ namespace g {
     complexity_type = parser.get<string>("compl");
     rel_compl_importance = parser.get<float>("rci");
     print("complexity type: ",complexity_type," (rel. importance: ",rel_compl_importance,")");
+
+
     
     // other
     cout << std::setprecision(NUM_PRECISION);

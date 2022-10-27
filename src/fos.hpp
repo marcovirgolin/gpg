@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include "globals.hpp"
 #include "node.hpp"
 #include "myeig.hpp"
@@ -47,6 +48,45 @@ struct FOSBuilder
     vector<vector<int>> fos = fast_upgma(MI);
     // remove the root to avoid complete replacements
     fos.pop_back();
+
+    if (g::no_large_subsets) {
+      vector<vector<int>> trimmed_fos; trimmed_fos.reserve(fos.size());
+      for (auto subset : fos) {
+        if (subset.size() <= num_random_variables / 2) {
+          trimmed_fos.push_back(subset);
+        }
+      }
+      fos = trimmed_fos;
+    }
+    
+    if (g::no_univariate) {
+      vector<vector<int>> trimmed_fos; trimmed_fos.reserve(fos.size());
+      for (auto subset : fos) {
+        if (subset.size() > 1) {
+          trimmed_fos.push_back(subset);
+        }
+      }
+      fos = trimmed_fos;
+    } else if (g::no_univariate_except_leaves) {
+      // find leaves positions
+      unordered_set<int> position_of_leaves;
+      vector<Node*> some_nodes = population[0]->subtree();
+      for(int i = 0; i < num_random_variables; i++) {
+        if (some_nodes[i]->depth() == g::max_depth) {
+          position_of_leaves.insert(i);
+        }
+      }
+
+      vector<vector<int>> trimmed_fos; trimmed_fos.reserve(fos.size());
+      for (auto subset : fos) {
+        bool keep = subset.size() > 1 || position_of_leaves.find(subset[0]) != position_of_leaves.end();
+        if (keep) {
+          trimmed_fos.push_back(subset);
+        } 
+      }
+      fos = trimmed_fos;
+
+    }
 
     return fos;
   }

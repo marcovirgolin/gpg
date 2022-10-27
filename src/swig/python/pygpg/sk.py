@@ -17,9 +17,6 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for k in kwargs:
       setattr(self, k, kwargs[k])
 
-  def __del__(self):
-    del self._gpg_cpp
-
   def init_cpp(self):
     # build string of options for cpp
     kwargs = self.get_params()
@@ -86,6 +83,8 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     models = self._gpg_cpp.models().split("\n")
 
     # simplify (with stopping)
+    if self.verbose:
+      print(f"simplifying {len(models)} models...")
     simplified_models = list()
     for m in models:
       simpl_m = conversion.timed_simplify(m, ratio=1.0, timeout=5)
