@@ -60,7 +60,7 @@ Veci feature_selection(Mat & X, Vec & y, int to_retain=10, float ignore_treshold
     // update scores by subtracting max abs pears corr with last inserted idx
     if (best_sc_idx > 0)
       for(int i = 0; i < num_features; i++)
-        scores[i] = scores[i] > NINF ? scores[i] - P(i,best_sc_idx) : scores[i];
+        scores[i] = scores[i] > NINF ? scores[i] - P(i,best_sc_idx) / ((float)num_features) : scores[i];
 
     // get next to include w.r.t. score
     best_sc_idx = argmax(scores);

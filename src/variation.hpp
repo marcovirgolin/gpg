@@ -6,6 +6,7 @@
 #include "operator.hpp"
 #include "util.hpp"
 #include "selection.hpp"
+#include "fos.hpp"
 
 #include <vector>
 
@@ -14,7 +15,7 @@ using namespace std;
 Op * _sample_operator(vector<Op *> & operators, Vec & cumul_probs) {
   float r = randu();
   int i = 0;
-  while (r >= cumul_probs[i]) {
+  while (r > cumul_probs[i]) {
     i++;
   }
   return operators[i]->clone();  
@@ -275,7 +276,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
   }
 
   // variant of forced improvement that is potentially less aggressive, & less expensive to carry out
-  if(g::tourfi && !ever_improved) {
+  if(g::tournament_size > 1 && !ever_improved) {
     // make a tournament between tournament size - 1 candidates + offspring
     vector<Node*> tournament_candidates; tournament_candidates.reserve(g::tournament_size - 1);
     for(int i = 0; i < g::tournament_size - 1; i++) {

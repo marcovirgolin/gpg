@@ -263,10 +263,13 @@ struct Log : Fun {
   }
 
   Vec apply(Mat & X) override {
-    // Log of x < 0 is undefined and log of 0 is -inf, thus convert to NAN
+    // Log of x < 0 is undefined and log of 0 is -inf
     Vec x = X.col(0);
-    replace(x, 0, NAN, "<=");
-    return x.log();
+    return (clip(x, 1.0)).log();
+  }
+
+  string human_repr(vector<string> & args) override {
+    return "sqrt(max(1.0,"+args[0]+"))";
   }
 
 };
@@ -274,7 +277,7 @@ struct Log : Fun {
 struct Sqrt : Fun {
 
   Op * clone() override {
-    return new Sqrt();
+    return new Sqrt(*this);
   }
 
   int arity() override {
@@ -286,10 +289,13 @@ struct Sqrt : Fun {
   }
 
   Vec apply(Mat & X) override {
-    // Sqrt of x < 0 is undefined, thus convert to NAN
+    // Sqrt of x < 0 is undefined
     Vec x = X.col(0);
-    replace(x, 0, NAN, "<");
-    return x.sqrt();
+    return (clip(x, 0)).sqrt();
+  }
+
+  string human_repr(vector<string> & args) override {
+    return "sqrt(max(0,"+args[0]+"))";
   }
 
 };

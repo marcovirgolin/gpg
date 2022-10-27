@@ -17,6 +17,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for k in kwargs:
       setattr(self, k, kwargs[k])
 
+  def __del__(self):
+    del self._gpg_cpp
+
   def init_cpp(self):
     # build string of options for cpp
     kwargs = self.get_params()
@@ -92,14 +95,14 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     # proceed with simplified models  
     models = simplified_models
 
-    # replace bad symbols with 1.0 (arbitrary)
-    s_inf = sympy.Symbol("inf")
-    models = [m.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0)).replace(sympy.I,sympy.Float(1.0)).replace(sympy.nan, sympy.Float(1.0))
-      for m in models]
+    # cleanup
+    models = [conversion.model_cleanup(m) for m in models]
 
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
       import finetuning as ft
+      if self.verbose:
+        print(f"finetuning {len(models)} models...")
       models = [ft.finetune(m, X, y) for m in models]
 
     # pick best
@@ -117,7 +120,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     # adjust errs
     errs = [err if err != "nan" else max_err + 1e-6 for err in errs]
 
-    if hasattr(self, "rci"):
+    if hasattr(self, "rci") and len(models) > 1:
       complexity_metric = "node_count" if not hasattr(self, "compl") else self.compl
       compls = [complexity.compute_complexity(m, complexity_metric) for m in models]
       best_idx = complexity.determine_rci_best(errs, compls, self.rci)

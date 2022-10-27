@@ -69,6 +69,19 @@ Veci ranking(Vec & x) {
   return r;
 }
 
+auto clip(Vec & x, float min, float max=INF)
+{
+  return x.cwiseMin(min).cwiseMax(max);
+}
+
+float variance(Vec & x) {
+  return (x.array() - x.mean()).square().mean();
+}
+
+float stddev(Vec & x) {
+  return sqrt(variance(x));
+}
+
 float corr(Vec & x, Vec & y) {
   float mean_x = x.mean();
   float mean_y = y.mean();

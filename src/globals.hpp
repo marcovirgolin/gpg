@@ -61,7 +61,6 @@ namespace g {
   float cmut_eps;
   float cmut_prob;
   float cmut_temp;
-  bool tourfi;
 
   // selection
   int tournament_size;
@@ -129,7 +128,6 @@ namespace g {
       
     if (setting == "auto") {
       // set unary operators to have half the chance other ones (which are normally binary)
-
       Veci arities(functions.size());
       int num_unary = 0;
       for(int i = 0; i < functions.size(); i++) {
@@ -269,8 +267,24 @@ namespace g {
     }
 
   }
+  
+
+  void reset() {
+    for(auto * f : functions) {
+      delete f;
+    }
+    functions.clear();
+    for(auto * t : terminals) {
+      delete t; 
+    }
+    terminals.clear();
+    if (fit_func)
+      delete fit_func;
+    fit_func = NULL;
+  }
 
   void read_options(int argc, char** argv) {
+    reset();
     cli::Parser parser(argc, argv);
 
     // budget
@@ -297,7 +311,6 @@ namespace g {
     // variation
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
-    parser.set_optional<bool>("tourfi", "tournament_forced_improvement", true, "Whether to use tournament selection as a forced improvement step after GOM");
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     // other
@@ -316,7 +329,7 @@ namespace g {
 
     // random_state
     random_state = parser.get<int>("random_state");
-    if (random_state > 0){
+    if (random_state >= 0){
       srand((unsigned int) random_state);
       print("random state: ", random_state);
     } else {
@@ -354,10 +367,8 @@ namespace g {
     cmut_prob = parser.get<float>("cmp");
     cmut_temp = parser.get<float>("cmt");
     print("coefficient mutation probability: ", cmut_prob, ", temperature: ",cmut_temp);
-    tourfi = parser.get<bool>("tourfi");
-    print("tournament-based forced improvement: ", tourfi ? "active" : "inactive");
     tournament_size = parser.get<int>("tour");
-    print("tournament size (if active): ", tournament_size);
+    print("tournament size: ", tournament_size);
 
     no_linkage = parser.get<bool>("nolink");
     print("compute linkage: ", no_linkage ? "false" : "true");
@@ -411,11 +422,9 @@ namespace g {
     rel_compl_importance = parser.get<float>("rci");
     print("complexity type: ",complexity_type," (rel. importance: ",rel_compl_importance,")");
     
-    
     // other
     cout << std::setprecision(NUM_PRECISION);
   }
-
 
   void clear_globals() {
     for(auto * o : all_operators) {
@@ -424,14 +433,7 @@ namespace g {
     for(auto * f : all_fitness_functions) {
       delete f;
     }
-    for(auto * f : functions) {
-      delete f;
-    }
-    for(auto * t : terminals) {
-      delete t; 
-    }
-    if (fit_func)
-      delete fit_func;
+    reset();
   }
 
 
