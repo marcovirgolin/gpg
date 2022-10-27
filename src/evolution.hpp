@@ -46,6 +46,7 @@ struct Evolution {
       auto * tree = generate_tree(g::max_depth, g::init_strategy);
       string str_tree = tree->str_subtree();
       if (init_attempts < g::max_init_attempts && already_generated.find(str_tree) != already_generated.end()) {
+        tree->clear();
         init_attempts++;
         if (init_attempts == g::max_init_attempts) {
           print("Warning: could not initialize a syntactically-unique population within ", init_attempts, " attempts");

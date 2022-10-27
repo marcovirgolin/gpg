@@ -17,6 +17,10 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for k in kwargs:
       setattr(self, k, kwargs[k])
 
+  def __del__(self):
+    if hasattr(self, "_gpg_cpp"):
+      del self._gpg_cpp
+
   def init_cpp(self):
     # build string of options for cpp
     kwargs = self.get_params()
@@ -83,7 +87,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     models = self._gpg_cpp.models().split("\n")
 
     # simplify (with stopping)
-    if self.verbose:
+    if hasattr(self, "verbose") and self.verbose:
       print(f"simplifying {len(models)} models...")
     simplified_models = list()
     for m in models:
@@ -100,7 +104,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
       import finetuning as ft
-      if self.verbose:
+      if hasattr(self, "verbose") and self.verbose:
         print(f"finetuning {len(models)} models...")
       models = [ft.finetune(m, X, y) for m in models]
 

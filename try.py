@@ -35,7 +35,6 @@ print(g.model)
 p = g.predict(X_test)
 print(r2_score(y_test, p), mean_squared_error(y_test, p))
 
-quit()
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import GridSearchCV
 
@@ -45,7 +44,11 @@ hyper_params = [
       'cmp': (0.1,), 'd': (5,), 'e': (10000,), 'feat_sel': (10,), 'fset': ('+,-,*,/,log,cos,sqrt',), 'g': (-1,), 'random_state': (23654,), 'rci': (0.1,), 't': (7200,)
     },
 ]
-grid_est = GridSearchCV(g, param_grid=hyper_params, cv=3,
+grid_est = GridSearchCV(g, param_grid=hyper_params, cv=10,
+                verbose=2, n_jobs=1, scoring='r2', error_score=0.0)
+
+grid_est.fit(X_train, y_train)
+grid_est = GridSearchCV(g, param_grid=hyper_params, cv=10,
                 verbose=2, n_jobs=1, scoring='r2', error_score=0.0)
 
 grid_est.fit(X_train, y_train)
@@ -53,9 +56,9 @@ p = grid_est.predict(X_test)
 print(r2_score(y_test, p), mean_squared_error(y_test, p))
 
 
-"""
-m = g.model()
-print(m)
+print(g.model)
+
+quit()
 
 
 import sympy
@@ -87,4 +90,3 @@ def _get_gradient(model, coeff_symbols):
 _get_gradient(ms, cs)
 g = sympy.lambdify(cs, ms, modules="numpy")
 print(g(0.99,0.1))
-"""
