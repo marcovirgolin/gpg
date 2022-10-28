@@ -9,7 +9,7 @@ def timed_simplify(model, ratio=1.0):
 
 def model_cleanup(sympy_model):
   # replace Pi, torch cannot convert
-  sympy_model = sympy_model.subs(sympy.core.numbers.Pi, sympy.Float(3.14159265))
+  sympy_model = sympy_model.subs(sympy.core.numbers.Pi(), sympy.Float(3.14159265))
   # replace bad symbols (with 1.0, arbitrary numbers)
   s_inf = sympy.Symbol("inf")
   sympy_model = sympy_model.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0))
