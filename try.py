@@ -28,13 +28,13 @@ y_test = s.transform(y_test.reshape((-1,1)))
 
 from sklearn.base import clone
 
-g = GPGRegressor(t=7200, g=-1, e=500000, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
-  rci=0.1, finetune=False, verbose=True, random_state=42, cmp=1.0)
+g = GPGRegressor(t=7200, g=-1, e=500000, disable_ims=True, pop=100, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
+  rci=0.1, finetune=False, verbose=True, tour=2, random_state=42, cmp=0.0)
 g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)
 print(r2_score(y_test, p), mean_squared_error(y_test, p))
-
+quit()
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import GridSearchCV
 

@@ -111,6 +111,12 @@ struct IMS {
     for(int i = evolutions.size() - 1; i >= 0; i--) {
       auto fitnesses_i = g::fit_func->get_fitnesses(evolutions[i]->population, false);
       float med_fit_i = median(fitnesses_i);
+
+      // if there is only one evolution & it converged, terminate it
+      if (g::disable_ims && approximately_converged(fitnesses_i)) {
+        largest_obsolete_idx = i;
+      }
+
       for (int j = i-1; j >= 0; j--) {
         auto fitnesses_j = g::fit_func->get_fitnesses(evolutions[j]->population, false);
         float med_fit_j = median(fitnesses_j);
@@ -128,12 +134,14 @@ struct IMS {
     }
 
     // terminate all previous
-    for (int i = 0; i < largest_obsolete_idx; i++) {
+    for (int i = 0; i <= largest_obsolete_idx; i++) {
       // free memory
       delete evolutions[i];
     }
-    // resize array
-    evolutions = vector<Evolution*>(evolutions.begin() + largest_obsolete_idx + 1, evolutions.end());
+    // resize evolutions array
+    if (largest_obsolete_idx > -1) {
+      evolutions = vector<Evolution*>(evolutions.begin() + largest_obsolete_idx + 1, evolutions.end());
+    }
   }
 
   void reset_elites() {

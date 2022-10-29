@@ -51,15 +51,15 @@ def run_exp(seed, new=False):
     #g = GPG1(time=-1, generations=-1, evaluations=BUDGET,
     #  functions="+_-_*_p/_plog_sqrt", initmaxtreeheight=6,
     #  ims="4_1", seed=seed, coeffmut="0.1_0.5_1.0_9999", popsize=64)
-    #g = GPG2(t=10, g=-1, e=BUDGET, fset="+", ff="ac", d=2,
-    #  feat_sel=10, disable_ims=True, pop=20000, nolink=True, tour=8,
-    #  no_large_fos=True, no_univ_exc_leaves_fos=True,
-    #  rci=0.1, finetune=True, verbose=True, random_state=seed, cmp=0.0)
-    g = GPG2(t=3, g=-1, e=499500, tour=4,
-        disable_ims=True, pop=512, nolink=True,
-        no_large_fos=True, no_univ_exc_leaves_fos=True,
-        fset='+,-,*,/,log,sqrt,sin,cos', cmp=0.1, rci=0.1,
-        random_state=seed)
+    g = GPG2(t=10, g=-1, e=BUDGET, fset="+,-,*,/,sin,cos,log,sqrt", ff="ac", d=3,
+      feat_sel=10, disable_ims=True, pop=512, nolink=True, tour=4,
+      no_large_fos=True, no_univ_exc_leaves_fos=True,
+      rci=0.1, finetune=True, verbose=True, random_state=seed, cmp=0.1)
+    #g = GPG2(t=3, g=-1, e=499500, tour=4,
+    #    disable_ims=True, pop=512, nolink=True,
+    #    no_large_fos=True, no_univ_exc_leaves_fos=True,
+    #    fset='+,-,*,/,log,sqrt,sin,cos', cmp=0.1, rci=0.1,
+    #    random_state=seed)
     g.fit(X_train,y_train)
   train_err = mean_squared_error(y_train, g.predict(X_train))
   test_err = mean_squared_error(y_test, g.predict(X_test))
