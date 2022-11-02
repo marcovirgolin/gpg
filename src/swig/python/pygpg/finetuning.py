@@ -1,12 +1,13 @@
 from pygpg import conversion as C
 import numpy as np
 import torch
+import sympy
 from copy import deepcopy
 import re
 
 
-def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000, 
-  tol_grad=1e-7, tol_change=1e-9):
+def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000, 
+  tol_grad=1e-9, tol_change=1e-9):
 
   best_torch_model, best_loss = None, np.infty
 
@@ -15,6 +16,15 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
   if not isinstance(y, torch.TensorType):
       y = torch.tensor(y.reshape((-1,))) 
 
+  # workaround to have identical constants be treated as different ones
+  str_model = str(sympy_model)
+  sympy_model = sympy.sympify(str(sympy_model))
+  for el in sympy.preorder_traversal(sympy_model):
+    if isinstance(el, sympy.Float):
+      f = float(el)
+      str_model = str_model.replace(str(f), str(f+np.random.normal(0,1e-5)), 1)
+  sympy_model = sympy.sympify(str_model)
+
   expr_vars = set(re.findall(r'\bx_[0-9]+', str(sympy_model)))
   try:
     torch_model = C.sympy_to_torch(sympy_model)
@@ -22,6 +32,8 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
     print("Invalid conversion from sympy to torch during fine-tuning")
     return sympy_model
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
+
+  
 
   try: # optimizer might get an empty parameter list
     optimizer = torch.optim.LBFGS(
@@ -53,5 +65,7 @@ def finetune(sympy_model, X, y, learning_rate=1, n_steps=1000,
         break
       prev_loss = loss_val
   
+
   result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
+  result = C.timed_simplify(result)
   return result

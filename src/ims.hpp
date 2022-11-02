@@ -93,6 +93,22 @@ struct IMS {
       return false;
     }
     Evolution * evo = new Evolution(pop_size);
+
+    if (g::disable_ims && elites_per_complexity.size() > 0) {
+      // if this was a re-start of the single population that converged before
+      // inject a random elite by replacing a random solution
+
+      // get random elite
+      auto it = elites_per_complexity.begin();
+      std::advance(it, randi(elites_per_complexity.size()));
+      Node * an_elite = it->second;
+
+      int repl_idx = randi(evo->population.size());
+      evo->population[repl_idx]->clear();
+      evo->population[repl_idx] = an_elite->clone();
+      print(" + injecting an elite into re-started population");
+    }
+
     evolutions.push_back(evo);
     print(" + init. new evolution with pop.size: ",pop_size);
     return true;
