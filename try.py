@@ -28,30 +28,27 @@ y_test = s.transform(y_test.reshape((-1,1)))
 
 from sklearn.base import clone
 
-g = GPGRegressor(t=7200, g=-1, e=500000, disable_ims=True, pop=1000, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
-  nolink=False, no_large_fos=True, 
-  d=4, rci=0.0, finetune=True, verbose=True, tour=4, random_state=42, cmp=0.0)
+g = GPGRegressor(t=7200, g=-1, e=10000, disable_ims=True, pop=1000, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
+  nolink=False, feat_sel=10, no_large_fos=True, 
+  d=4, rci=0.0, finetune=False, verbose=True, tour=4, random_state=42, cmp=0.0)
 g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)
 print(r2_score(y_train, g.predict(X_train)), mean_squared_error(y_train, g.predict(X_train)))
 print(r2_score(y_test, p), mean_squared_error(y_test, p))
-quit()
+#quit()
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import GridSearchCV
 
 g = clone(g)
 hyper_params = [
     {
-      'cmp': (0.1,), 'd': (5,), 'e': (10000,), 'feat_sel': (10,), 'fset': ('+,-,*,/,log,cos,sqrt',), 'g': (-1,), 'random_state': (23654,), 'rci': (0.1,), 't': (7200,)
+      'cmp': (0.1,), 'd': (5,), 'e': (500000,), 'feat_sel': (10,), 'fset': ('+,-,*,/,log,cos,sqrt',), 'g': (-1,), 'random_state': (23654,), 'rci': (0.1,), 't': (7200,)
     },
 ]
-grid_est = GridSearchCV(g, param_grid=hyper_params, cv=10,
-                verbose=2, n_jobs=1, scoring='r2', error_score=0.0)
+grid_est = GridSearchCV(g, param_grid=hyper_params, cv=100,
+                verbose=2, n_jobs=40, scoring='r2', error_score=0.0)
 
-grid_est.fit(X_train, y_train)
-grid_est = GridSearchCV(g, param_grid=hyper_params, cv=10,
-                verbose=2, n_jobs=1, scoring='r2', error_score=0.0)
 
 grid_est.fit(X_train, y_train)
 p = grid_est.predict(X_test)

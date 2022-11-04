@@ -252,6 +252,7 @@ namespace g {
     // remove those terminals from the search (from back to front not to screw up indexing)
     for(int i = indices_to_remove.size() - 1; i >= 0; i--) {
       int idx = indices_to_remove[i];
+      delete terminals[idx];
       terminals.erase(terminals.begin() + idx);
     }
 
