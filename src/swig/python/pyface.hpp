@@ -40,7 +40,7 @@ struct GPGPyFace {
     auto opts = split_string(str_options, " ");
     int argc = opts.size()+1;
     char * argv[argc];
-    string title = "minigpg";
+    string title = "gpg";
     argv[0] = (char*) title.c_str();
     for (int i = 1; i < argc; i++) {
       argv[i] = (char*) opts[i-1].c_str();
