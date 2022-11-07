@@ -407,9 +407,14 @@ namespace g {
       if (lib_batch_size == "auto") {
         batch_size = fit_func->X_train.rows();
       } else {
+        int n = fit_func->X_train.rows();
         batch_size = stoi(lib_batch_size);
+        if (batch_size > n) {
+          print("[!] Warning: batch size is larger than the number of training examples. Setting it to ", n);
+          batch_size = n;
+        }
       }
-      print("batch size: ",lib_batch_size);
+      print("batch size: ",batch_size);
     }
 
     // representation

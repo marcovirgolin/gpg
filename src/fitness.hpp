@@ -83,9 +83,6 @@ struct Fitness {
   bool update_batch(int num_observations) {
 
     int n = X_train.rows();
-    if (num_observations > X_train.rows()) {
-      throw runtime_error("Batch size ("+to_string(num_observations)+") is larger than number of observation in training set ("+to_string(n)+")");
-    }
 
     if (num_observations==n) {
       X_batch = X_train;

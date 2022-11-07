@@ -6,19 +6,50 @@ from sklearn.model_selection import GridSearchCV
 np.random.seed(42)
 
 
-X = np.random.randn(1024, 3)*10
+X = np.random.randn(24, 3)*10
 
 def grav_law(X):
   return 6.67 * X[:,0]*X[:,1]/(np.square(X[:,2]))
 
 y = grav_law(X)
 
-from sklearn.datasets import load_boston
+#from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler as SS
 from sklearn.model_selection import train_test_split
 
-X, y = load_boston(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=12)
+#X, y = load_boston(return_X_y=True)
+
+
+"""
+Load poker
+"""
+
+params = [{
+  "cmp": (0.1,),
+  "d": (4,),
+  "disable_ims": (True,),
+  "e": (499500,),
+  "feat_sel": (16,),
+  "finetune": (True,),
+  "fset": ("+,-,*,/,log,sqrt,sin,cos",),
+  "g": (-1,),
+  "no_large_fos": (True,),
+  "no_univ_exc_leaves_fos": (False,),
+  "nolink": (True,),
+  "pop": (1024,),
+  "random_state": (860,),
+  "rci": (0.0,),
+  "t": (7200,),
+  "tour": (4,),
+}]
+
+# load poker
+import pandas as pd
+#df = pd.read_csv("../pmlb/datasets/1595_poker/1595_poker.tsv.gz", compression='gzip', sep='\t')
+#X = df.drop(columns=['target']).to_numpy()
+#y = df['target'].to_numpy()
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=860)
 s = SS()
 X_train = s.fit_transform(X_train)
 X_test = s.transform(X_test)
@@ -29,9 +60,14 @@ y_test = s.transform(y_test.reshape((-1,1)))
 from sklearn.base import clone
 
 g = GPGRegressor(t=7200, g=-1, e=10000, disable_ims=True, pop=1000, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
-  nolink=False, feat_sel=10, no_large_fos=True, 
+  nolink=False, feat_sel=10, no_large_fos=True, bs=100,
   d=4, rci=0.0, finetune=False, verbose=True, tour=4, random_state=42, cmp=0.0)
-g.fit(X_train,y_train)
+from sklearn.model_selection import KFold
+cv = KFold(n_splits=10, shuffle=True,random_state=860)
+grid_est = GridSearchCV(g, param_grid=params, cv=cv, verbose=2, n_jobs=10, scoring='r2', error_score=0.0)
+grid_est.fit(X_train, y_train)
+g = grid_est.best_estimator_
+#g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)
 print(r2_score(y_train, g.predict(X_train)), mean_squared_error(y_train, g.predict(X_train)))

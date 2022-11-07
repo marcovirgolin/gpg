@@ -51,7 +51,7 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000,
       try:
         p = torch_model(**x_args).squeeze(-1)
       except TypeError:
-        print("Warning: error during forward call of torch model while fine-tuning")
+        print("[!] Warning: error during forward call of torch model while fine-tuning")
         return sympy_model
       loss = (p-y).pow(2).mean().div(2)
       loss.retain_grad()
@@ -65,7 +65,6 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000,
         break
       prev_loss = loss_val
   
-
   result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
   result = C.timed_simplify(result)
   return result

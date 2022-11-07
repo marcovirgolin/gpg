@@ -65,9 +65,14 @@ struct GPGPyFace {
     if (g::lib_batch_size == "auto") {
       g::batch_size = g::fit_func->X_train.rows();
     } else {
+      int n = g::fit_func->X_train.rows();
       g::batch_size = stoi(g::lib_batch_size);
+      if (g::batch_size > n) {
+        print("[!] Warning: batch size is larger than the number of training examples. Setting it to ", n);
+        g::batch_size = n;
+      }
     }
-    print("batch size: ",g::lib_batch_size);
+    print("batch size: ", g::batch_size);
     // run ims
     ims->run();
   }

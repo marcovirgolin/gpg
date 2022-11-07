@@ -170,5 +170,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     # (e.g., sympy.core.numbers.Zero)
     if type(prediction) == int or type(prediction) == float:
       prediction = np.array([float(prediction)]*X.shape[0])
+    if len(prediction) != X.shape[0]:
+      prediction = np.array([prediction[0]]*X.shape[0])
 
     return prediction

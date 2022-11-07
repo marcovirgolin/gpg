@@ -49,7 +49,7 @@ struct Evolution {
         tree->clear();
         init_attempts++;
         if (init_attempts == g::max_init_attempts) {
-          print("Warning: could not initialize a syntactically-unique population within ", init_attempts, " attempts");
+          print("[!] Warning: could not initialize a syntactically-unique population within ", init_attempts, " attempts");
         }
         continue;
       } 
