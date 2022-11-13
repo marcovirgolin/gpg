@@ -6,8 +6,8 @@ from copy import deepcopy
 import re
 
 
-def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000, 
-  tol_grad=1e-9, tol_change=1e-9):
+def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100, 
+  tol_grad=1e-9, tol_change=1e-9, batch_size=None):
 
   best_torch_model, best_loss = None, np.infty
 
@@ -29,11 +29,9 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000,
   try:
     torch_model = C.sympy_to_torch(sympy_model)
   except TypeError:
-    print("Invalid conversion from sympy to torch during fine-tuning")
+    print("[!] Wearning: invalid conversion from sympy to torch pre fine-tuning")
     return sympy_model
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
-
-  
 
   try: # optimizer might get an empty parameter list
     optimizer = torch.optim.LBFGS(
@@ -46,24 +44,33 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=1000,
     return sympy_model
 
   prev_loss = np.infty
+  batch_idx = 0
+  batch_x = x_args
+  batch_y = y
   for _ in range(n_steps):
-      optimizer.zero_grad()
-      try:
-        p = torch_model(**x_args).squeeze(-1)
-      except TypeError:
-        print("[!] Warning: error during forward call of torch model while fine-tuning")
-        return sympy_model
-      loss = (p-y).pow(2).mean().div(2)
-      loss.retain_grad()
-      loss.backward()
-      optimizer.step(lambda: loss)
-      loss_val = loss.item()
-      if loss_val < best_loss:
-        best_torch_model = deepcopy(torch_model)
-        best_loss = loss_val
-      if abs(loss_val - prev_loss) < tol_change:
-        break
-      prev_loss = loss_val
+    optimizer.zero_grad()
+    permutation = torch.randperm(X.size()[0])
+    if batch_size is not None:
+      indices = permutation[batch_idx*batch_size:(batch_idx+1)*batch_size]
+      batch_x = {x: x_args[x][indices] for x in expr_vars}
+      batch_y = y[indices]
+      batch_idx += 1
+    try:
+      p = torch_model(**batch_x).squeeze(-1)
+    except TypeError:
+      print("[!] Warning: error during forward call of torch model while fine-tuning")
+      return sympy_model
+    loss = (p-batch_y).pow(2).mean().div(2)
+    loss.retain_grad()
+    loss.backward()
+    optimizer.step(lambda: loss)
+    loss_val = loss.item()
+    if loss_val < best_loss:
+      best_torch_model = deepcopy(torch_model)
+      best_loss = loss_val
+    if abs(loss_val - prev_loss) < tol_change:
+      break
+    prev_loss = loss_val
   
   result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
   result = C.timed_simplify(result)

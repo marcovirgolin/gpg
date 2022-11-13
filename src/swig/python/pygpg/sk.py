@@ -106,7 +106,13 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       import finetuning as ft
       if hasattr(self, "verbose") and self.verbose:
         print(f"finetuning {len(models)} models...")
-      models = [ft.finetune(m, X, y) for m in models]
+
+      finetuning_batch_size = None
+      if len(X) > 10000:
+        print("[!] Warning: finetuning on large datasets can be slow, using mini batches of size 10,000")
+        finetuning_batch_size = 10000
+      models = [ft.finetune(m, X, y, 
+        batch_size=finetuning_batch_size) for m in models]
 
     # pick best
     errs = list()
