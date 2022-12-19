@@ -17,9 +17,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for k in kwargs:
       setattr(self, k, kwargs[k])
 
-  def __del__(self):
-    if hasattr(self, "_gpg_cpp"):
-      del self._gpg_cpp
+  #def __del__(self):
+  #  if hasattr(self, "_gpg_cpp"):
+  #    del self._gpg_cpp
 
   def init_cpp(self):
     # build string of options for cpp
@@ -66,6 +66,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
 
   def fit(self, X, y):
+    # setup cpp interface
     self.init_cpp()
 
     # impute if needed
@@ -79,6 +80,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
     # extract the model as a sympy and store it internally
     self.model = self._pick_best_model(X, y)
+
+    # cleanup cpp memory
+    del self._gpg_cpp
     
 
   def _pick_best_model(self, X, y):
@@ -107,12 +111,10 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       if hasattr(self, "verbose") and self.verbose:
         print(f"finetuning {len(models)} models...")
 
-      finetuning_batch_size = None
       if len(X) > 10000:
-        print("[!] Warning: finetuning on large datasets can be slow, using mini batches of size 10,000")
-        finetuning_batch_size = 10000
-      models = [ft.finetune(m, X, y, 
-        batch_size=finetuning_batch_size) for m in models]
+        print("[!] Warning: finetuning on large datasets (>10,000 obs.) can be slow, skipping...")
+      else:
+        models = [ft.finetune(m, X, y) for m in models]
 
     # pick best
     errs = list()
@@ -174,7 +176,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     
     # can still happen for certain classes of sympy 
     # (e.g., sympy.core.numbers.Zero)
-    if type(prediction) == int or type(prediction) == float:
+    if type(prediction) in [int, float, np.int64, np.float64]:
       prediction = np.array([float(prediction)]*X.shape[0])
     if len(prediction) != X.shape[0]:
       prediction = np.array([prediction[0]]*X.shape[0])

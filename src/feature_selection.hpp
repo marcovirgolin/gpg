@@ -6,7 +6,7 @@
 using namespace std;
 using namespace myeig;
 
-Veci feature_selection(Mat & X, Vec & y, int to_retain=10, float ignore_treshold=0.05) {
+Veci feature_selection(Mat & X, Vec & y, int to_retain=10) {
 
   int num_features = X.cols();
   Veci result;
@@ -46,12 +46,6 @@ Veci feature_selection(Mat & X, Vec & y, int to_retain=10, float ignore_treshold
 
   // initialize scores to abs spearson correlation
   Vec scores = ascs;
-  // set values that are almost 0 to neg inf, so that they cannot be selected
-  for(int i = 0; i < num_features; i++) {
-    if (scores[i] < ignore_treshold) {
-      scores[i] = NINF;
-    }
-  }
 
   // then scores will be updated as we include more features in retained
   int best_sc_idx = -1; // this keeps track of what is the last inserted idx

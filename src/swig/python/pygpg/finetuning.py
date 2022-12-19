@@ -7,7 +7,7 @@ import re
 
 
 def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100, 
-  tol_grad=1e-9, tol_change=1e-9, batch_size=None):
+  tol_grad=1e-9, tol_change=1e-9):
 
   best_torch_model, best_loss = None, np.infty
 
@@ -49,12 +49,6 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
   batch_y = y
   for _ in range(n_steps):
     optimizer.zero_grad()
-    permutation = torch.randperm(X.size()[0])
-    if batch_size is not None:
-      indices = permutation[batch_idx*batch_size:(batch_idx+1)*batch_size]
-      batch_x = {x: x_args[x][indices] for x in expr_vars}
-      batch_y = y[indices]
-      batch_idx += 1
     try:
       p = torch_model(**batch_x).squeeze(-1)
     except TypeError:
