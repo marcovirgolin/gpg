@@ -27,10 +27,14 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
 
   expr_vars = set(re.findall(r'\bx_[0-9]+', str(sympy_model)))
   try:
-    torch_model = C.sympy_to_torch(sympy_model)
+    torch_model = C.sympy_to_torch(sympy_model, timeout=5)
   except TypeError:
-    print("[!] Wearning: invalid conversion from sympy to torch pre fine-tuning")
+    print("[!] Warning: invalid conversion from sympy to torch pre fine-tuning")
     return sympy_model
+  if torch_model is None:
+    print("[!] Warning: failed to convert from sympy to torch within a reasonable time")
+    return sympy_model
+
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
 
   try: # optimizer might get an empty parameter list
@@ -44,7 +48,6 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
     return sympy_model
 
   prev_loss = np.infty
-  batch_idx = 0
   batch_x = x_args
   batch_y = y
   for _ in range(n_steps):
@@ -67,5 +70,7 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
     prev_loss = loss_val
   
   result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
-  result = C.timed_simplify(result)
+  result = C.timed_simplify(result, timeout=5)
+  if result is None:
+    return sympy_model
   return result

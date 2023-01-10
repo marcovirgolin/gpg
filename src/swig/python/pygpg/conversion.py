@@ -7,13 +7,18 @@ from stopit import threading_timeoutable as timeoutable
 def timed_simplify(model, ratio=1.0):
   return sympy.simplify(model, ratio=ratio)
 
+@timeoutable()
 def model_cleanup(sympy_model):
   # replace Pi, torch cannot convert
   sympy_model = sympy_model.subs(sympy.core.numbers.Pi(), sympy.Float(3.14159265))
-  # replace bad symbols (with 1.0, arbitrary numbers)
+  # replace bad symbols (with 1.0, an arbitrary number)
   s_inf = sympy.Symbol("inf")
-  sympy_model = sympy_model.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo,sympy.Float(1.0))
-  sympy_model = sympy_model.replace(sympy.I,sympy.Float(1.0)).replace(sympy.nan, sympy.Float(1.0))
+  sympy_model = sympy_model.subs(s_inf, sympy.Float(1.0)).replace(sympy.zoo, sympy.Float(1.0))
+  sympy_model = sympy_model.subs(sympy.conjugate, sympy.Float(1.0)).subs(sympy.AccumBounds, sympy.Float(1.0))
+  sympy_model = sympy_model.subs(sympy.StrictLessThan, sympy.Float(1.0)).subs(sympy.StrictGreaterThan, sympy.Float(1.0))
+  sympy_model = sympy_model.replace(sympy.oo, sympy.Float(1.0))
+  sympy_model = sympy_model.replace(sympy.S.Infinity, sympy.Float(1.0)).replace(sympy.S.NegativeInfinity, sympy.Float(1.0))
+  sympy_model = sympy_model.replace(sympy.I, sympy.Float(1.0)).replace(sympy.nan, sympy.Float(1.0))
   return sympy_model
 
 
@@ -21,6 +26,7 @@ def model_cleanup(sympy_model):
 Code by Pierre-Alexandre Kamienny
 https://github.com/pakamienny/e2e_transformer/blob/a4208974779e2109593297ef1992d0b14dd91b00/symbolicregression/envs/simplifiers.py
 """
+@timeoutable()
 def sympy_to_torch(sympy_model, partialize=False):
   torch_model = sympytorch.SymPyModule(expressions=[sympy_model])
 
@@ -49,7 +55,7 @@ class MyNumPyPrinter(NumPyPrinter):
     idx_c = -1
     for i, arg in enumerate(expr.args):
       try:
-        c = float(arg)
+        _ = float(arg)
         idx_c = i
         break
       except ValueError:
@@ -59,6 +65,7 @@ class MyNumPyPrinter(NumPyPrinter):
     result = f"clip({self._print(expr.args[idx_other])}, {self._print(expr.args[idx_c])}, numpy.inf)"
     return result
 
+@timeoutable()
 def sympy_to_numpy_fn(sympy_model):
   def wrapper_fn(_sympy_model, X, extra_local_dict={}):
     

@@ -103,7 +103,8 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     models = simplified_models
 
     # cleanup
-    models = [conversion.model_cleanup(m) for m in models]
+    models = [conversion.model_cleanup(m, timeout=5) for m in models]
+    models = [m for m in models if m is not None]
 
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
@@ -122,14 +123,14 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     for m in models:
       p = self.predict(X, model=m)
       if np.isnan(p).any():
-        err = "nan"
+        err = float("nan")
       else:
         err = mean_squared_error(y, p)
         if err > max_err:
           max_err = err
       errs.append(err)
     # adjust errs
-    errs = [err if err != "nan" else max_err + 1e-6 for err in errs]
+    errs = [err if not np.isnan(err) else max_err + 1e-6 for err in errs]
 
     if hasattr(self, "rci") and len(models) > 1:
       complexity_metric = "node_count" if not hasattr(self, "compl") else self.compl
@@ -166,7 +167,10 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       prediction = np.array([float(model)]*X.shape[0])
       return prediction
 
-    f = conversion.sympy_to_numpy_fn(model)
+    f = conversion.sympy_to_numpy_fn(model, timeout=5)
+    if f is None:
+      print("[!] Warning: failed to convert sympy model to numpy, returning NaN as prediction")
+      return float("nan")
 
     if np.isnan(X).any():
       assert(hasattr(self, "imputer"))
