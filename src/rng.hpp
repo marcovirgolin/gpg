@@ -1,6 +1,6 @@
 // Code from Johannes Koch
-#ifndef GOMEA_RNG
-#define GOMEA_RNG
+#ifndef THREAD_RNG
+#define THREAD_RNG
 
 #pragma once
 
@@ -71,4 +71,4 @@ public:
   };
 };
 
-#endif /* GOMEA_RNG */
+#endif /* THREAD_RNG */
