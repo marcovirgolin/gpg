@@ -8,6 +8,7 @@
 #include <chrono>
 #include <iterator>
 #include "myeig.hpp"
+#include "rng.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -153,9 +154,11 @@ pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
 
   return make_pair(interc, slope);    
 }
-
+// method from Johannes Koch
 double randu() {
-  return (double) rand() / (double) (RAND_MAX + 1.0);
+  uniform_real_distribution<double> distribution(0.0,1.0);
+  double r = distribution(ThreadRng::get());  
+  return r;
 }
 
 int randi(int min_inclusive, int max_exclusive) {
