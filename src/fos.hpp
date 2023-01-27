@@ -26,7 +26,7 @@ struct FOSBuilder
 
     if (g::no_linkage)
     {
-      MI = Mat::Random(num_random_variables, num_random_variables);
+      MI = randumat(num_random_variables, num_random_variables);
       // make symmetric
       for(int i = 0; i < MI.rows(); i++) {
         for(int j = i+1; j < MI.cols(); j++) {

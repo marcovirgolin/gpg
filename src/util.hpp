@@ -156,7 +156,7 @@ pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
 }
 // method from Johannes Koch
 double randu() {
-  uniform_real_distribution<double> distribution(0.0,1.0);
+  uniform_real_distribution<double> distribution(0.0, 1.0);
   double r = distribution(ThreadRng::get());  
   return r;
 }
@@ -180,6 +180,26 @@ float randn() {
   } while( rsq >= 1. || rsq == 0. );
   float f = sqrt( -2.0 * log(rsq) / rsq );
   return x * f;
+}
+
+Mat randumat(int n_rows, int n_cols) {
+  Mat m = Mat(n_rows, n_cols);
+  for(int i = 0; i < n_rows; i++) {
+    for(int j = 0; j < n_cols; j++) {
+      m(i, j) = randu();
+    }
+  }
+  return m;
+}
+
+Mat randnmat(int n_rows, int n_cols) {
+  Mat m = Mat(n_rows, n_cols);
+  for(int i = 0; i < n_rows; i++) {
+    for(int j = 0; j < n_cols; j++) {
+      m(i, j) = randn();
+    }
+  }
+  return m;
 }
 
 auto tick() {
