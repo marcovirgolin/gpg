@@ -154,31 +154,6 @@ pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
   return make_pair(interc, slope);    
 }
 
-double randu() {
-  return (double) rand() / (double) (RAND_MAX + 1.0);
-}
-
-int randi(int min_inclusive, int max_exclusive) {
-  int range = max_exclusive - min_inclusive;
-  return min_inclusive + randu()*range;
-}
-
-int randi(int max_exclusive) {
-  return randi(0, max_exclusive);
-}
-
-float randn() {
-  // Marsiglia algorithm
-  float x, y, rsq;
-  do {
-    x = 2.0 * randu() - 1.0;
-    y = 2.0 * randu() - 1.0;
-    rsq = x * x + y * y;
-  } while( rsq >= 1. || rsq == 0. );
-  float f = sqrt( -2.0 * log(rsq) / rsq );
-  return x * f;
-}
-
 auto tick() {
   return Clock::now();
 }
@@ -200,15 +175,6 @@ vector<int> argsort(const vector<T> &array) {
         return array[left] < array[right];
       });
   return indices;
-}
-
-vector<int> rand_perm(int num_elements) {
-  vector<float> rand_vec;
-  rand_vec.reserve(num_elements);
-  for(int i = 0; i < num_elements; i++) {
-    rand_vec.push_back(randu());
-  }
-  return argsort(rand_vec);
 }
 
 Vec replace(Vec & x, float what, float with, string condition="=") {

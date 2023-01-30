@@ -5,6 +5,7 @@
 #include "myeig.hpp"
 #include "node.hpp"
 #include "util.hpp"
+#include "rng.hpp"
 
 using namespace myeig;
 
@@ -91,7 +92,7 @@ struct Fitness {
     }
     
     // else pick some random elements
-    auto chosen = rand_perm(num_observations);
+    auto chosen = Rng::rand_perm(num_observations);
     this->X_batch = X_train(chosen, Eigen::all);
     this->y_batch = y_train(chosen);
     return true;

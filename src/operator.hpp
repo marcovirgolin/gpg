@@ -3,6 +3,7 @@
 
 #include "myeig.hpp"
 #include "util.hpp"
+#include "rng.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -395,7 +396,7 @@ struct Const : Term {
   }
 
   void _sample() {
-    this->c = roundd(randu()*10 - 5, NUM_PRECISION);
+    this->c = roundd(Rng::randu()*10 - 5, NUM_PRECISION);
   }
 
   int arity() override {

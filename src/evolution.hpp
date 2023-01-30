@@ -82,7 +82,7 @@ struct Evolution {
     vector<Node*> offspring_population; 
     offspring_population.reserve(pop_size);
     for(int i = 0; i < pop_size; i++) {
-      auto * cr_offspring = crossover(population[i], population[randu()*population.size()]);
+      auto * cr_offspring = crossover(population[i], population[Rng::randu()*population.size()]);
       auto * mut_offspring = mutation(cr_offspring, g::functions, g::terminals, 0.75);
       cr_offspring->clear();
       mut_offspring = coeff_mut(mut_offspring, false);
