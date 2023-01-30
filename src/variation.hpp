@@ -7,13 +7,14 @@
 #include "util.hpp"
 #include "selection.hpp"
 #include "fos.hpp"
+#include "rng.hpp"
 
 #include <vector>
 
 using namespace std;
 
 Op * _sample_operator(vector<Op *> & operators, Vec & cumul_probs) {
-  float r = randu();
+  float r = Rng::randu();
   int i = 0;
   while (r > cumul_probs[i]) {
     i++;
@@ -33,7 +34,7 @@ Node * _grow_tree_recursive(int max_arity, int max_depth_left, int actual_depth_
   Node * n = NULL;
 
   if (max_depth_left > 0) {
-    if (actual_depth_left > 0 && randu() < 1.0-terminal_prob) {
+    if (actual_depth_left > 0 && Rng::randu() < 1.0-terminal_prob) {
       n = new Node(_sample_function());
     } else {
       n = new Node(_sample_terminal());
@@ -67,9 +68,9 @@ Node * generate_tree(int max_depth, string init_type="hh") {
 
   if (init_type == "rhh" || init_type == "hh") {
     if (init_type == "rhh")
-      actual_depth = randu() * max_depth;
+      actual_depth = Rng::randu() * max_depth;
     
-    bool is_full = randu() < .5;
+    bool is_full = Rng::randu() < .5;
 
     if (is_full)
       tree = _grow_tree_recursive(max_arity, max_depth, actual_depth, -1, 0.0);
@@ -97,14 +98,14 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
     for(Node * n : nodes) {
       if (
         n->op->type() == OpType::otConst &&
-        randu() < g::cmut_prob
+        Rng::randu() < g::cmut_prob
         ) {
 
         float c = ((Const*)n->op)->c;
         float std = g::cmut_temp*abs(c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
-        float mutated_c = roundd(c * randn()*std, NUM_PRECISION); 
+        float mutated_c = roundd(c * Rng::randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
       }
     }
@@ -114,8 +115,8 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
 }
 
 vector<int> _sample_crossover_mask(int num_nodes) {
-  auto crossover_mask = rand_perm(num_nodes);
-  int k = 1+sqrt(num_nodes)*abs(randn());
+  auto crossover_mask = Rng::rand_perm(num_nodes);
+  int k = 1+sqrt(num_nodes)*abs(Rng::randn());
   k = min(k, num_nodes);
   crossover_mask.erase(crossover_mask.begin() + k, crossover_mask.end());
   assert(crossover_mask.size() == k);
@@ -145,7 +146,7 @@ Node * mutation(Node * parent, vector<Op*> & functions, vector<Op*> & terminals,
   auto crossover_mask = _sample_crossover_mask(nodes.size());
   for(int i : crossover_mask) {
     delete nodes[i]->op;
-    if (nodes[i]->children.size() > 0 && randu() < prob_fun) {
+    if (nodes[i]->children.size() > 0 && Rng::randu() < prob_fun) {
       nodes[i]->op = _sample_function();
     }
     else {
@@ -204,7 +205,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
   float backup_fitness = parent->fitness;
   vector<Node*> offspring_nodes = offspring->subtree();
 
-  auto random_fos_order = rand_perm(fos.size());
+  auto random_fos_order = Rng::rand_perm(fos.size());
 
   bool ever_improved = false;
   for(int fos_idx = 0; fos_idx < fos.size(); fos_idx++) {
@@ -214,7 +215,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     vector<Op*> backup_ops; backup_ops.reserve(crossover_mask.size());
     vector<int> effectively_changed_indices; effectively_changed_indices.reserve(crossover_mask.size());
 
-    Node * donor = population[randi(population.size())];
+    Node * donor = population[Rng::randi(population.size())];
     vector<Node*> donor_nodes = donor->subtree();
 
     for(int & idx : crossover_mask) {
@@ -280,7 +281,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     // make a tournament between tournament size - 1 candidates + offspring
     vector<Node*> tournament_candidates; tournament_candidates.reserve(g::tournament_size - 1);
     for(int i = 0; i < g::tournament_size - 1; i++) {
-      tournament_candidates.push_back(population[randi(population.size())]);
+      tournament_candidates.push_back(population[Rng::randi(population.size())]);
     }
     tournament_candidates.push_back(offspring);
     Node * winner = tournament(tournament_candidates, g::tournament_size);

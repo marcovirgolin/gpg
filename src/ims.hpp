@@ -8,6 +8,7 @@
 #include "util.hpp"
 #include "evolution.hpp"
 #include "myeig.hpp"
+#include "rng.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -100,10 +101,10 @@ struct IMS {
 
       // get random elite
       auto it = elites_per_complexity.begin();
-      std::advance(it, randi(elites_per_complexity.size()));
+      std::advance(it, Rng::randi(elites_per_complexity.size()));
       Node * an_elite = it->second;
 
-      int repl_idx = randi(evo->population.size());
+      int repl_idx = Rng::randi(evo->population.size());
       evo->population[repl_idx]->clear();
       evo->population[repl_idx] = an_elite->clone();
       print(" + injecting an elite into re-started population");

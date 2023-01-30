@@ -8,6 +8,7 @@
 #include "node.hpp"
 #include "myeig.hpp"
 #include "util.hpp"
+#include "rng.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -26,7 +27,7 @@ struct FOSBuilder
 
     if (g::no_linkage)
     {
-      MI = randumat(num_random_variables, num_random_variables);
+      MI = Rng::randu_mat(num_random_variables, num_random_variables);
       // make symmetric
       for(int i = 0; i < MI.rows(); i++) {
         for(int j = i+1; j < MI.cols(); j++) {
@@ -282,7 +283,7 @@ struct FOSBuilder
     int num_entries = S.rows();
 
     // random order
-    vector<int> random_order = rand_perm(num_entries);
+    vector<int> random_order = Rng::rand_perm(num_entries);
 
     // initial marginal product model
     vector<vector<int>> mpm(num_entries, vector<int>(1));
@@ -321,7 +322,7 @@ struct FOSBuilder
     {
       if (NN_chain_length == 0)
       {
-        NN_chain[NN_chain_length] = (int)randu() * mpm_length;
+        NN_chain[NN_chain_length] = Rng::randi(mpm_length);
         NN_chain_length++;
       }
 

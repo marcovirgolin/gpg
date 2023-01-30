@@ -8,7 +8,6 @@
 #include <chrono>
 #include <iterator>
 #include "myeig.hpp"
-#include "rng.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -154,53 +153,6 @@ pair<float, float> linear_scaling_coeffs(Vec & y, Vec & p) {
 
   return make_pair(interc, slope);    
 }
-// method from Johannes Koch
-double randu() {
-  uniform_real_distribution<double> distribution(0.0, 1.0);
-  double r = distribution(ThreadRng::get());  
-  return r;
-}
-
-int randi(int min_inclusive, int max_exclusive) {
-  int range = max_exclusive - min_inclusive;
-  return min_inclusive + randu()*range;
-}
-
-int randi(int max_exclusive) {
-  return randi(0, max_exclusive);
-}
-
-float randn() {
-  // Marsiglia algorithm
-  float x, y, rsq;
-  do {
-    x = 2.0 * randu() - 1.0;
-    y = 2.0 * randu() - 1.0;
-    rsq = x * x + y * y;
-  } while( rsq >= 1. || rsq == 0. );
-  float f = sqrt( -2.0 * log(rsq) / rsq );
-  return x * f;
-}
-
-Mat randumat(int n_rows, int n_cols) {
-  Mat m = Mat(n_rows, n_cols);
-  for(int i = 0; i < n_rows; i++) {
-    for(int j = 0; j < n_cols; j++) {
-      m(i, j) = randu();
-    }
-  }
-  return m;
-}
-
-Mat randnmat(int n_rows, int n_cols) {
-  Mat m = Mat(n_rows, n_cols);
-  for(int i = 0; i < n_rows; i++) {
-    for(int j = 0; j < n_cols; j++) {
-      m(i, j) = randn();
-    }
-  }
-  return m;
-}
 
 auto tick() {
   return Clock::now();
@@ -223,15 +175,6 @@ vector<int> argsort(const vector<T> &array) {
         return array[left] < array[right];
       });
   return indices;
-}
-
-vector<int> rand_perm(int num_elements) {
-  vector<float> rand_vec;
-  rand_vec.reserve(num_elements);
-  for(int i = 0; i < num_elements; i++) {
-    rand_vec.push_back(randu());
-  }
-  return argsort(rand_vec);
 }
 
 Vec replace(Vec & x, float what, float with, string condition="=") {

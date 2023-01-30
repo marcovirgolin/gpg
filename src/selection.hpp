@@ -5,11 +5,12 @@
 #include "node.hpp"
 #include "util.hpp"
 #include "globals.hpp"
+#include "rng.hpp"
 
 using namespace std;
 
 Node * tournament(vector<Node*> & candidates, int tournament_size) {
-  auto rp = rand_perm(candidates.size());
+  auto rp = Rng::rand_perm(candidates.size());
   Node * winner = candidates[rp[0]];
   for(int i = 1; i < tournament_size; i++) {
     if (candidates[rp[i]]->fitness <= winner->fitness)
@@ -37,7 +38,7 @@ vector<Node*> popwise_tournament(vector<Node*> & population, int selection_size,
 
   for(int i = 0; i < n_rounds; i++){
     // get a random permutation 
-    auto perm = rand_perm(pop_size);
+    auto perm = Rng::rand_perm(pop_size);
 
     // apply tournaments
     for(int j = 0; j < n_selected_per_round; j++) {

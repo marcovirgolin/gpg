@@ -339,7 +339,7 @@ namespace g {
     // random_state
     random_state = parser.get<int>("random_state");
     if (random_state >= 0){
-      ThreadRng::set_seed(random_state);
+      Rng::set_seed(random_state);
       print("random state: ", random_state);
     } else {
       print("random state: not set");
