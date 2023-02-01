@@ -14,9 +14,9 @@
 using namespace std;
 
 Op * _sample_operator(vector<Op *> & operators, Vec & cumul_probs) {
-  float r = Rng::randu();
+  double r = Rng::randu();
   int i = 0;
-  while (r > cumul_probs[i]) {
+  while (r > (double) cumul_probs[i]) {
     i++;
   }
   return operators[i]->clone();  

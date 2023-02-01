@@ -127,7 +127,7 @@ public:
 
   // Returns a random permutation of the numbers 0 to num_elements-1
   static vector<int> rand_perm(int num_elements) {
-    vector<float> rand_vec;
+    vector<double> rand_vec;
     rand_vec.reserve(num_elements);
     for(int i = 0; i < num_elements; i++) {
       rand_vec.push_back(Rng::randu());
