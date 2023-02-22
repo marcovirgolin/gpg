@@ -3,7 +3,7 @@
 
 #include <Eigen/Dense>
 #include "myeig.hpp"
-#include "node.hpp"
+#include "individual.hpp"
 #include "util.hpp"
 #include "rng.hpp"
 
@@ -12,7 +12,7 @@ using namespace myeig;
 struct Fitness {
 
   int evaluations = 0;
-  long long node_evaluations = 0;
+  long long component_evaluations = 0;
 
   virtual ~Fitness() {};
 
@@ -27,12 +27,12 @@ struct Fitness {
     throw runtime_error("Not implemented");
   }
 
-  virtual float get_fitness(Node * n, Mat & X, Vec & y) {
+  virtual float get_fitness(Individual * indiv, Mat & X, Vec & y) {
     throw runtime_error("Not implemented");
   }
 
   // shorthand for training set
-  float get_fitness(Node * n, Mat * X=NULL, Vec * y=NULL) {
+  float get_fitness(Individual * indiv, Mat * X=NULL, Vec * y=NULL) {
     if (!X)
       X = & this->X_batch;
     if (!y)
@@ -40,13 +40,13 @@ struct Fitness {
 
     // update evaluations
     evaluations += 1;
-    node_evaluations += n->get_num_nodes(true); 
+    component_evaluations += indiv->get_num_components(true); 
 
     // call specific implementation
-    return get_fitness(n, *X, *y);
+    return get_fitness(indiv, *X, *y);
   }
 
-  Vec get_fitnesses(vector<Node*> population, bool compute=true, Mat * X=NULL, Vec * y=NULL) {  
+  Vec get_fitnesses(vector<Individual*> & population, bool compute=true, Mat * X=NULL, Vec * y=NULL) {  
     Vec fitnesses(population.size());
     for(int i = 0; i < population.size(); i++) {
       if (compute)
@@ -110,13 +110,13 @@ struct MAEFitness : Fitness {
     return new MAEFitness();
   }
 
-  float get_fitness(Node * n, Mat & X, Vec & y) override {
-    Vec out = n->get_output(X);
+  float get_fitness(Individual * indiv, Mat & X, Vec & y) override {
+    Vec out = indiv->eval(X);
 
     float fitness = (y - out).abs().mean();
     if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
-    n->fitness = roundd(fitness, NUM_PRECISION + 2);
+    indiv->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }
@@ -133,13 +133,13 @@ struct MSEFitness : Fitness {
     return new MSEFitness();
   }
 
-  float get_fitness(Node * n, Mat & X, Vec & y) override {
-    Vec out = n->get_output(X);
+  float get_fitness(Individual * indiv, Mat & X, Vec & y) override {
+    Vec out = indiv->eval(X);
 
     float fitness = (y-out).square().mean();
     if (isnan(fitness) || fitness < 0) // the latter can happen due to float overflow
       fitness = INF;
-    n->fitness = roundd(fitness, NUM_PRECISION + 2);
+    indiv->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }
@@ -156,15 +156,15 @@ struct AbsCorrFitness : Fitness {
     return new AbsCorrFitness();
   }
 
-  float get_fitness(Node * n, Mat & X, Vec & y) override {
-    Vec out = n->get_output(X);
+  float get_fitness(Individual * indiv, Mat & X, Vec & y) override {
+    Vec out = indiv->eval(X);
 
     float fitness = 1.0-abs(corr(y, out));
     // Below, the < 0 can happen due to float overflow, while 
     // the = 0 is meant to penalize constants as much as broken solutions
     if (isnan(fitness) || fitness <= 0) 
       fitness = INF;
-    n->fitness = roundd(fitness, NUM_PRECISION + 2);
+    indiv->fitness = roundd(fitness, NUM_PRECISION + 2);
 
     return fitness;
   }

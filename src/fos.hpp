@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "globals.hpp"
-#include "node.hpp"
+#include "individual.hpp"
 #include "myeig.hpp"
 #include "util.hpp"
 #include "rng.hpp"
@@ -19,9 +19,9 @@ struct FOSBuilder
   bool first_time = true;
   Mat B;
 
-  vector<vector<int>> build_linkage_tree(vector<Node *> &population)
+  vector<vector<int>> build_linkage_tree(vector<Individual *> &population)
   {
-    int num_random_variables = population[0]->subtree().size();
+    int num_random_variables = population[0]->genome.size();
 
     Mat MI;
 
@@ -68,26 +68,7 @@ struct FOSBuilder
         }
       }
       fos = trimmed_fos;
-    } else if (g::no_univariate_except_leaves) {
-      // find leaves positions
-      unordered_set<int> position_of_leaves;
-      vector<Node*> some_nodes = population[0]->subtree();
-      for(int i = 0; i < num_random_variables; i++) {
-        if (some_nodes[i]->depth() == g::max_depth) {
-          position_of_leaves.insert(i);
-        }
-      }
-
-      vector<vector<int>> trimmed_fos; trimmed_fos.reserve(fos.size());
-      for (auto subset : fos) {
-        bool keep = subset.size() > 1 || position_of_leaves.find(subset[0]) != position_of_leaves.end();
-        if (keep) {
-          trimmed_fos.push_back(subset);
-        } 
-      }
-      fos = trimmed_fos;
-
-    }
+    } 
 
     return fos;
   }
@@ -122,9 +103,8 @@ struct FOSBuilder
     return closest_c;
   }
 
-  pair<vector<vector<int>>, int> discretize_population_symbols(vector<Node *> &population, int num_random_variables, int max_constants_binning = 25)
+  pair<vector<vector<int>>, int> discretize_population_symbols(vector<Individual *> &population, int num_random_variables, int max_constants_binning = 25)
   {
-
     int pop_size = population.size();
     int num_symbs = 0;
     unordered_map<string, int> symb_to_discr_map;
@@ -139,18 +119,17 @@ struct FOSBuilder
 
     for (int i = 0; i < pop_size; i++)
     {
-      vector<int> discr_nodes;
-      discr_nodes.reserve(num_random_variables);
+      vector<int> discr_symbs;
+      discr_symbs.reserve(num_random_variables);
 
-      vector<Node *> nodes = population[i]->subtree();
+      vector<string> genome = population[i]->genome;
       for (int j = 0; j < num_random_variables; j++)
       {
-        Node *n = nodes[j];
-        string v = n->op->sym();
+        string v = genome[j];
         // if constant, actually use constant binning
-        if (n->op->type() == OpType::otConst)
+        if (!(all_operators.count(v) || v[0] == 'x'))
         {
-          float c = ((Const *)n->op)->c;
+          float c = stof(v);
           v = to_string(constant_binning(c, binned_constants, max_constants_binning));
         }
         // discretize
@@ -158,15 +137,15 @@ struct FOSBuilder
         if (it == symb_to_discr_map.end())
         {
           symb_to_discr_map[v] = num_symbs;
-          discr_nodes.push_back(num_symbs);
+          discr_symbs.push_back(num_symbs);
           num_symbs++;
         }
         else
         {
-          discr_nodes.push_back(it->second);
+          discr_symbs.push_back(it->second);
         }
       }
-      discr_pop[i] = discr_nodes;
+      discr_pop[i] = discr_symbs;
     }
 
     assert(num_symbs == symb_to_discr_map.size());

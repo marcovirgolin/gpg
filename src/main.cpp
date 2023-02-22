@@ -5,7 +5,7 @@
 #include "util.hpp"
 #include "evolution.hpp"
 #include "ims.hpp"
-#include "node.hpp"
+#include "individual.hpp"
 #include "tests.hpp"
 
 using namespace myeig;

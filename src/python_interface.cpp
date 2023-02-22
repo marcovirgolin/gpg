@@ -45,7 +45,7 @@ py::list evolve(string options, myeig::Mat &X, myeig::Vec &y) {
   }
   py::list models;
   for (auto it = ims->elites_per_complexity.begin(); it != ims->elites_per_complexity.end(); it++) {
-    string model_repr = it->second->human_repr();
+    string model_repr = it->second->to_infix_notation();
     models.append(model_repr);
   }
 

@@ -2,4 +2,4 @@
 
 make clean
 make debug
-valgrind --leak-check=full --tool=memcheck ./build/debug/gpg -train dataset/diabetes_train.csv -pop 4 -g 10 -disable_ims -verbose -bs 4 -fset +,-,*,/ -fset_probs auto -feat_sel 9
+valgrind --leak-check=full --tool=memcheck ./build/debug/gpg -train dataset/diabetes_train.csv -pop 4 -g 10 -disable_ims -verbose -bs 4 -oset +,-,*,/ -oset_probs auto -feat_sel 9

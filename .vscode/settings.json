@@ -76,6 +76,9 @@
     "utility": "cpp",
     "stop_token": "cpp",
     "list": "c",
-    "*.ipp": "cpp"
+    "*.ipp": "cpp",
+    "valarray": "cpp",
+    "unordered_set": "cpp",
+    "any": "cpp"
   }
 }

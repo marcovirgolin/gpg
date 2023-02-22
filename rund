@@ -2,4 +2,4 @@
 
 make clean
 make debug
-./build/debug/gpg -train dataset/diabetes_train.csv -pop 40 -g 10 -verbose -fset +,-,*,/ -bs auto
+./build/debug/gpg -train dataset/diabetes_train.csv -pop 40 -g 10 -verbose -oset +,-,*,/ -bs auto

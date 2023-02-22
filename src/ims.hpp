@@ -20,7 +20,7 @@ struct IMS {
 
   vector<Evolution*> evolutions;
   int macro_generations = 0;
-  unordered_map<float, Node*> elites_per_complexity;
+  unordered_map<float, Individual*> elites_per_complexity;
 
   ~IMS() {
     for (Evolution * e : evolutions) {
@@ -29,13 +29,13 @@ struct IMS {
     reset_elites();
   }
 
-  Node * select_elite(float rel_compl_importance=0.0) {
+  Individual * select_elite(float rel_compl_importance=0.0) {
     // get relative fitness among elites
     float min_fit = INF;
     float max_fit = NINF;
     float min_compl = INF;
     float max_compl = NINF;
-    vector<Node*> ordered_elites; ordered_elites.reserve(elites_per_complexity.size());
+    vector<Individual*> ordered_elites; ordered_elites.reserve(elites_per_complexity.size());
     vector<float> ordered_fitnesses; ordered_fitnesses.reserve(elites_per_complexity.size());
     vector<float> ordered_complexities; ordered_complexities.reserve(elites_per_complexity.size());
 
@@ -102,10 +102,10 @@ struct IMS {
       // get random elite
       auto it = elites_per_complexity.begin();
       std::advance(it, Rng::randi(elites_per_complexity.size()));
-      Node * an_elite = it->second;
+      Individual * an_elite = it->second;
 
       int repl_idx = Rng::randi(evo->population.size());
-      evo->population[repl_idx]->clear();
+      delete evo->population[repl_idx];
       evo->population[repl_idx] = an_elite->clone();
       print(" + injecting an elite into re-started population");
     }
@@ -163,7 +163,7 @@ struct IMS {
 
   void reset_elites() {
     for(auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
-      it->second->clear();
+      delete it->second;
     }
     elites_per_complexity.clear();
   }
@@ -174,20 +174,20 @@ struct IMS {
     }
   }
 
-  void update_elites(vector<Node*>& population) {
-    for (Node * tree : population){
-      float c = compute_complexity(tree);
+  void update_elites(vector<Individual*>& population) {
+    for (Individual * indiv : population){
+      float c = compute_complexity(indiv);
       // determine if to insert this among elites and eliminate now-obsolete elites
       bool worse_or_equal_than_existing = false;
       vector<float> obsolete_complexities; obsolete_complexities.reserve(elites_per_complexity.size());
       for(auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
-        if (c >= it->first && tree->fitness >= it->second->fitness) {
-          // this tree is equal or worse than an existing elite
+        if (c >= it->first && indiv->fitness >= it->second->fitness) {
+          // this indiv is equal or worse than an existing elite
           worse_or_equal_than_existing = true;
           break;
         }
         // check if a previous elite became obsolete
-        if (c <= it->first && tree->fitness < it->second->fitness) {
+        if (c <= it->first && indiv->fitness < it->second->fitness) {
           obsolete_complexities.push_back(it->first);
         }  
       }
@@ -197,13 +197,13 @@ struct IMS {
 
       // remove obsolete elites
       for(float oc : obsolete_complexities) {
-        elites_per_complexity[oc]->clear();
+        delete elites_per_complexity[oc];
         elites_per_complexity.erase(oc);
       }
 
-      // save this tree as a new elite
-      elites_per_complexity[c] = tree->clone();
-      //print("\tfound new equation with fitness ", tree->fitness, " and complexity ", c);
+      // save this indiv as a new elite
+      elites_per_complexity[c] = indiv->clone();
+      //print("\tfound new equation with fitness ", indiv->fitness, " and complexity ", c);
     }
 
   }
@@ -237,7 +237,7 @@ struct IMS {
           (g::max_generations > 0 && macro_generations == g::max_generations) ||
           (g::max_time > 0 && tock(start_time) >= g::max_time) ||
           (g::max_evaluations > 0 && g::fit_func->evaluations >= g::max_evaluations) ||
-          (g::max_node_evaluations > 0 && g::fit_func->node_evaluations >= g::max_node_evaluations)
+          (g::max_component_evaluations > 0 && g::fit_func->component_evaluations >= g::max_component_evaluations)
         ) {
           stop = true;
           break;
@@ -283,17 +283,17 @@ struct IMS {
     // if abs corr, append linear scaling terms
     if (g::fit_func->name() == "ac") {
       for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
-        elites_per_complexity[it->first] = append_linear_scaling(it->second);
+        elites_per_complexity[it->first] = variation::append_linear_scaling(it->second);
       }
     }
 
     if (!g::_call_as_lib) { // TODO: remove false
       print("\nAll elites found:");
       for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
-        print(it->first, " ", it->second->fitness, ":", it->second->human_repr());
+        print(it->first, " ", it->second->fitness, ":", it->second->to_infix_notation());
       }
       print("\nBest w.r.t. complexity for chosen importance:");
-      print(this->select_elite(g::rel_compl_importance)->human_repr());
+      print(this->select_elite(g::rel_compl_importance)->to_infix_notation());
     }
     
   }

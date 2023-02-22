@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <map>
 #include "myeig.hpp"
 #include "operator.hpp"
 #include "fitness.hpp"
@@ -17,14 +18,6 @@ using namespace myeig;
 
 namespace g {
 
-  // ALL operators
-  vector<Op*> all_operators = {
-    new Add(), new Sub(), new Neg(), new Mul(), new Div(), new Inv(), 
-    new Square(), new Sqrt(), new Cube(),
-    new Sin(), new Cos(), 
-    new Log(),
-  };
-
   // ALL fitness functions 
   vector<Fitness*> all_fitness_functions = {
     new MAEFitness(), new MSEFitness(), new AbsCorrFitness()
@@ -35,14 +28,14 @@ namespace g {
   int max_generations;
   int max_time;
   int max_evaluations;
-  long long max_node_evaluations;
+  long long max_component_evaluations;
   bool disable_ims = false;
 
   // representation
   int max_depth;
   string init_strategy;
-  vector<Op*> functions;
-  vector<Op*> terminals;
+  vector<string> operators;
+  vector<string> terminals;
   Vec cumul_fset_probs;
   Vec cumul_tset_probs;
   string lib_tset; // used when `fit` is called when using as lib
@@ -65,7 +58,6 @@ namespace g {
   float cmut_temp;
   bool no_large_subsets=false;
   bool no_univariate=false;
-  bool no_univariate_except_leaves=false;
 
   // selection
   int tournament_size;
@@ -90,32 +82,27 @@ namespace g {
     }
   }
 
-  void set_functions(string setting) {
-    assert(functions.empty());
-    vector<string> desired_operator_symbs = split_string(setting);
-    for (string sym : desired_operator_symbs) {
-      bool found = false;
-      for (Op * op : all_operators) {
-        if (op->sym() == sym) {
-          found = true;
-          functions.push_back(op->clone());
-          break;
-        }
-      }
+  void set_operators(string setting) {
+    assert(operators.empty());
+    vector<string> desired_funct_symbs = split_string(setting);
+    for (string sym : desired_funct_symbs) {
+      // check sym is found
+      bool found = all_operators.count(sym);
       if (!found) {
         throw runtime_error("Unrecognized function: "+sym);
       }
+      operators.push_back(sym);
     }
   }
 
-  Vec _compute_custom_cumul_probs_operator_set(string setting, vector<Op*> & op_set) {
+  Vec _compute_custom_cumul_probs_operator_set(string setting, vector<string> & func_or_term_set) {
 
     auto str_v = split_string(setting);
-    if (str_v.size() != op_set.size()) {
+    if (str_v.size() != func_or_term_set.size()) {
       throw runtime_error("Size of the probabilities for function or terminal set does not match the size of the respective set: "+setting);
     }
 
-    Vec result(op_set.size());
+    Vec result(func_or_term_set.size());
     float cumul_prob = 0;
     for (int i = 0; i < str_v.size(); i++) {
       cumul_prob += stof(str_v[i]);
@@ -129,25 +116,26 @@ namespace g {
     return result;
   }
 
-  void set_function_probabilities(string setting) {
+  void set_operator_probabilities(string setting) {
       
     if (setting == "auto") {
       // set unary operators to have half the chance other ones (which are normally binary)
-      Veci arities(functions.size());
+      Veci arities(operators.size());
       int num_unary = 0;
-      for(int i = 0; i < functions.size(); i++) {
-        arities[i] = functions[i]->arity();
+      for(int i = 0; i < operators.size(); i++) {
+        int arity = all_operators[operators[i]].second;
+        arities[i] = arity;
         if (arities[i] == 1) {
           num_unary++;
         }
       }
 
-      int num_other = functions.size() - num_unary;
+      int num_other = operators.size() - num_unary;
       float p_unary = 1.0 / (2.0*num_other + num_unary);
       float p_other = 1.0 / (num_other + 0.5*num_unary);
 
       float cumul_prob = 0;
-      cumul_fset_probs = Vec(functions.size());
+      cumul_fset_probs = Vec(operators.size());
       for (int i = 0; i < arities.size(); i++) {
         if (arities[i] == 1) {
           cumul_prob += p_unary;
@@ -160,7 +148,7 @@ namespace g {
     }
 
     // else, use what provided
-    cumul_fset_probs = _compute_custom_cumul_probs_operator_set(setting, functions);
+    cumul_fset_probs = _compute_custom_cumul_probs_operator_set(setting, operators);
   }
 
   void set_terminals(string setting) {
@@ -169,24 +157,32 @@ namespace g {
     if (setting == "auto") {
       assert(fit_func);
       for(int i = 0; i < fit_func->X_train.cols(); i++) {
-        terminals.push_back(new Feat(i));
+        terminals.push_back("x_"+to_string(i));
       }
-      terminals.push_back(new Const());
+      terminals.push_back("erc");
     }
     else {
       vector<string> desired_terminal_symbs = split_string(setting);
+      // the following checks that the terminal is either a variable, a constant or erc
+      // {but could be skipped, and simply do terminals = split_string(setting)}
       for (string sym : desired_terminal_symbs) {
         try {
           if (sym.size() > 2 && sym.substr(0, 2) == "x_") {
             // variable
             int i = stoi(sym.substr(2,sym.size()));
-            terminals.push_back(new Feat(i)); 
+            if (i < 0) {
+              throw runtime_error("Variable index must be non-negative: "+sym);
+            }
+            else if (i > fit_func->X_train.cols()-1) {
+              throw runtime_error("Variable index is too large: "+sym);
+            }
+            terminals.push_back("x_"+to_string(i));
           } else if (sym == "erc") {
-            terminals.push_back(new Const());
+            terminals.push_back("erc");
           } else {
             // constant
             float c = stof(sym);
-            terminals.push_back(new Const(c));
+            terminals.push_back(to_string(c));
           }
         } catch(std::invalid_argument const& ex) {
           throw runtime_error("Unrecognized terminal: "+sym);
@@ -212,12 +208,8 @@ namespace g {
 
   string str_terminal_set() {
     string str = "";
-    for (Op * el : terminals) {
-      if (el->type() == OpType::otConst && isnan(((Const*)el)->c)) {
-        str += "erc,";
-      } else {
-        str += el->sym() + ",";
-      }
+    for (string el : terminals) {
+      str += el +",";
     }
     str = str.substr(0, str.size()-1);
     return str;
@@ -242,8 +234,8 @@ namespace g {
       return;
     }
     int num_features = 0;
-    for(Op * o : terminals) {
-      if (o->type() == OpType::otFeat)
+    for(string s : terminals) {
+      if (s[0] == 'x')
         num_features++;
     }
     if (num_features <= num_feats_to_keep)
@@ -253,12 +245,11 @@ namespace g {
     Veci indices_to_keep = feature_selection(fit_func->X_train, fit_func->y_train, num_feats_to_keep);
     vector<int> indices_to_remove; indices_to_remove.reserve(terminals.size());
     for(int i = 0; i < terminals.size(); i++) {
-      Op * o = terminals[i];
-      if (o->type() != OpType::otFeat)
+      if (terminals[i][0] != 'x')
         continue; // ignore constants
       
       auto end = indices_to_keep.data() + indices_to_keep.size();
-      if (find(indices_to_keep.data(), end, ((Feat*) o)->id) == end) {
+      if (find(indices_to_keep.data(), end, i) == end) {
         indices_to_remove.push_back(i);
       }
     }
@@ -266,7 +257,6 @@ namespace g {
     // remove those terminals from the search (from back to front not to screw up indexing)
     for(int i = indices_to_remove.size() - 1; i >= 0; i--) {
       int idx = indices_to_remove[i];
-      delete terminals[idx];
       terminals.erase(terminals.begin() + idx);
     }
 
@@ -286,16 +276,9 @@ namespace g {
     }
 
   }
-  
 
   void reset() {
-    for(auto * f : functions) {
-      delete f;
-    }
-    functions.clear();
-    for(auto * t : terminals) {
-      delete t; 
-    }
+    operators.clear();
     terminals.clear();
     if (fit_func)
       delete fit_func;
@@ -311,30 +294,29 @@ namespace g {
     parser.set_optional<int>("g", "generations", 20, "Budget of generations (-1 for disabled)");
     parser.set_optional<int>("t", "time", -1, "Budget of time (-1 for disabled)");
     parser.set_optional<int>("e", "evaluations", -1, "Budget of evaluations (-1 for disabled)");
-    parser.set_optional<long>("ne", "node_evaluations", -1, "Budget of node evaluations (-1 for disabled)");
+    parser.set_optional<long>("ce", "component_evaluations", -1, "Budget of component evaluations (-1 for disabled)");
     parser.set_optional<bool>("disable_ims", "disable_ims", false, "Whether to disable the IMS (default is false)");
     // initialization
     parser.set_optional<string>("is", "initialization_strategy", "hh", "Strategy to sample the initial population");
     parser.set_optional<int>("d", "depth", 4, "Maximum depth that the trees can have");
     // problem & representation
     parser.set_optional<string>("ff", "fitness_function", "ac", "Fitness function");
-    parser.set_optional<string>("fset", "function_set", "+,-,*,/,sin,cos,log", "Function set");
-    parser.set_optional<string>("fset_probs", "function_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as fset)");
+    parser.set_optional<string>("oset", "operator_set", "+,-,*,/,sin,cos,log", "Operator set");
+    parser.set_optional<string>("oset_probs", "operator_set_probabilities", "auto", "Probabilities of sampling each element of the operator set (same order as oset)");
     parser.set_optional<string>("tset", "terminal_set", "auto", "Terminal set");
-    parser.set_optional<string>("tset_probs", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the function set (same order as tset)");
+    parser.set_optional<string>("tset_probs", "terminal_set_probabilities", "auto", "Probabilities of sampling each element of the terminal set (same order as tset)");
     parser.set_optional<string>("train", "training_set", "./train.csv", "Path to the training set (needed only if calling as CLI)");
     parser.set_optional<string>("bs", "batch_size", "auto", "Batch size (default is 'auto', i.e., the entire training set)");
-    parser.set_optional<string>("compl", "complexity_type", "node_count", "Measure to score the complexity of candidate sotluions (default is node_count)");
+    parser.set_optional<string>("compl", "complexity_type", "component_count", "Measure to score the complexity of candidate sotluions (default is component_count)");
     parser.set_optional<float>("rci", "rel_compl_imp", 0.0, "Relative importance of complexity over accuracy to select the final elite (default is 0.0)");
     parser.set_optional<int>("feat_sel", "feature_selection", 10, "Max. number of feature to consider (if -1, all features are considered)");
     // variation
-    parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
+    parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
     parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
     parser.set_optional<bool>("no_large_fos", "no_large_fos", false, "Whether to discard subsets in the FOS with size > half the size of the genotype (default is false)");
     parser.set_optional<bool>("no_univ_fos", "no_univ_fos", false, "Whether to discard univariate subsets in the FOS (default is false)");
-    parser.set_optional<bool>("no_univ_exc_leaves_fos", "no_univ_exc_leaves_fos", false, "Whether to discard univariate subsets except for those that refer to leaves in the FOS (default is false)");
     // other
     parser.set_optional<int>("random_state", "random_state", -1, "Random state (seed)");
     parser.set_optional<bool>("verbose", "verbose", false, "Verbose");
@@ -371,12 +353,12 @@ namespace g {
     max_generations = parser.get<int>("g");
     max_time = parser.get<int>("t");
     max_evaluations = parser.get<int>("e");
-    max_node_evaluations = parser.get<long>("ne");
+    max_component_evaluations = parser.get<long>("ce");
     print("budget: ", 
       max_generations > -1 ? max_generations : INF, " generations, ", 
       max_time > -1 ? max_time : INF, " time [s], ", 
       max_evaluations > -1 ? max_evaluations : INF, " evaluations, ", 
-      max_node_evaluations > -1 ? max_node_evaluations : INF, " node evaluations" 
+      max_component_evaluations > -1 ? max_component_evaluations : INF, " component evaluations" 
     );
 
     // initialization
@@ -395,8 +377,7 @@ namespace g {
     no_linkage = parser.get<bool>("nolink");
     no_large_subsets = parser.get<bool>("no_large_fos");
     no_univariate = parser.get<bool>("no_univ_fos");
-    no_univariate_except_leaves = parser.get<bool>("no_univ_exc_leaves_fos");
-    print("compute linkage: ", no_linkage ? "false" : "true", " (FOS trimming-no large: ",no_large_subsets,", no univ.: ",no_univariate,", no. univ. exc. leaves: ",no_univariate_except_leaves,")");
+    print("compute linkage: ", no_linkage ? "false" : "true", " (FOS trimming-no large: ",no_large_subsets,", no univ.: ",no_univariate,")");
 
     // problem
     string fit_func_name = parser.get<string>("ff");
@@ -423,11 +404,11 @@ namespace g {
     }
 
     // representation
-    string fset = parser.get<string>("fset");
-    set_functions(fset);
-    string fset_p = parser.get<string>("fset_probs");
-    set_function_probabilities(fset_p);
-    print("function set: ",fset," (probabs: ",fset_p,")");
+    string oset = parser.get<string>("oset");
+    set_operators(oset);
+    string oset_p = parser.get<string>("oset_probs");
+    set_operator_probabilities(oset_p);
+    print("operator set: ",oset," (probabs: ",oset_p,")");
     
     lib_tset = parser.get<string>("tset");
     lib_feat_sel_number = parser.get<int>("feat_sel");
@@ -450,9 +431,6 @@ namespace g {
   }
 
   void clear_globals() {
-    for(auto * o : all_operators) {
-      delete o;
-    }
     for(auto * f : all_fitness_functions) {
       delete f;
     }
