@@ -223,6 +223,19 @@ namespace g {
     return str;
   }
 
+  void set_batch_size(string lib_batch_size) {
+    if (lib_batch_size == "auto") {
+      batch_size = fit_func->X_train.rows();
+    } else {
+      int n = fit_func->X_train.rows();
+      batch_size = stoi(lib_batch_size);
+      if (batch_size > n) {
+        print("[!] Warning: batch size is larger than the number of training examples. Setting it to ", n);
+        batch_size = n;
+      }
+    }
+  }
+
   void apply_feature_selection(int num_feats_to_keep) {
     // check if nothing needs to be done
     if (num_feats_to_keep == -1) {
@@ -405,17 +418,8 @@ namespace g {
     } 
     lib_batch_size = parser.get<string>("bs");
     if (!_call_as_lib) {
-      if (lib_batch_size == "auto") {
-        batch_size = fit_func->X_train.rows();
-      } else {
-        int n = fit_func->X_train.rows();
-        batch_size = stoi(lib_batch_size);
-        if (batch_size > n) {
-          print("[!] Warning: batch size is larger than the number of training examples. Setting it to ", n);
-          batch_size = n;
-        }
-      }
-      print("batch size: ",batch_size);
+      set_batch_size(lib_batch_size);
+      print("batch size: ", g::batch_size);
     }
 
     // representation
@@ -432,7 +436,7 @@ namespace g {
       set_terminals(lib_tset);
       apply_feature_selection(lib_feat_sel_number);
       set_terminal_probabilities(lib_tset_probs);
-      print("terminal set: ",str_terminal_set()," (probabs: ",lib_tset_probs, (lib_feat_sel_number > -1 ? ", feat.selection : "+to_string(lib_feat_sel_number) : ""), ")");
+      print("terminal set: ",str_terminal_set()," (probs: ",lib_tset_probs, (lib_feat_sel_number > -1 ? ", feat.selection : "+to_string(lib_feat_sel_number) : ""), ")");
     } 
 
     complexity_type = parser.get<string>("compl");
