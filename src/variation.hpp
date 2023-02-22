@@ -187,7 +187,7 @@ namespace variation {
         float std = g::cmut_temp*abs(c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
-        float mutated_c = roundd(c * Rng::randn()*std, NUM_PRECISION); 
+        float mutated_c = roundd(c + Rng::randn()*std, NUM_PRECISION); 
         indiv->genome[i] = to_string(mutated_c);
       }
     }
