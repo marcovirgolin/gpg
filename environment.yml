@@ -6,8 +6,8 @@ dependencies:
   - cmake=3.17
   - python=3.8
   - eigen=3.4.0
-  - swig=4.0.2
   - python-devtools=0.9.0
+  - pybind11
   - pip
   - pip:
     - numpy==1.23.3

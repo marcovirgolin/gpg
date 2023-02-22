@@ -4,6 +4,7 @@ cmake_policy(SET CMP0051 NEW)
 
 # Variables
 set(PROJECT_NAME gpg)
+set(PY_LIB_NAME _pb_gpg)
 set(NUM_PRECISION 6)
 
 set(CMAKE_CXX_FLAGS_VALGRIND
@@ -11,13 +12,13 @@ set(CMAKE_CXX_FLAGS_VALGRIND
 set(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG -Wall -Wconversion ${CXX_EXTRA}")
 set(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -O2 -DNDEBUG ${CXX_EXTRA}")
+    "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG ${CXX_EXTRA}")
 
 # Create project
 project(${PROJECT_NAME})               
 # Enable c++17 standard
 set(CMAKE_CXX_STANDARD 17)  
-
+set(PYBIND11_CPP_STANDARD -std=c++17)
 
 ### Inclusions
 
@@ -28,14 +29,14 @@ if(NOT EIGEN3_INCLUDE_DIR)
   message( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 endif()
 
-# Include SWIG for libraries
-find_package(SWIG REQUIRED)
-include(${SWIG_USE_FILE})
-
 # Include python libraries
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_PATH})
+
+# Include pybind11
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 
 
 ### Compilation flags
@@ -58,24 +59,21 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 # linking
 target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} pybind11::headers)
 
 # Do not check for CTRL+C from Python for the standalone executable
 target_compile_definitions(${PROJECT_NAME} PUBLIC CLI=1)
 target_compile_definitions(${PROJECT_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
 
-# SWIG
-set_property(SOURCE src/swig/python/pyface.i PROPERTY CPLUSPLUS ON)
-swig_add_library(pyface
-  TYPE MODULE
-  LANGUAGE python
-  SOURCES src/swig/python/pyface.i src/ src/swig/python/pyface.hpp ${EIGEN3_INCLUDE_DIR}
-)
-
-#target_include_directories(${PROJECT_NAME} PUBLIC "include/")
-set_property(TARGET pyface PROPERTY SWIG_COMPILE_OPTIONS -c++)
-target_include_directories(pyface PRIVATE src)
-target_include_directories(pyface PRIVATE src/swig/python)
-target_include_directories(pyface PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(pyface ${PYTHON_LIBRARIES})
-target_compile_definitions(pyface PUBLIC PYLIB=1)
-target_compile_definitions(pyface PUBLIC NUM_PRECISION=${NUM_PRECISION})
+### Pybind interface (pyfe)
+#pybind11_add_module(pyfe src/python_interface.hpp)
+add_library(${PY_LIB_NAME} MODULE src/python_interface.cpp)
+set_target_properties(${PY_LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_definitions(${PY_LIB_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
+target_include_directories(${PY_LIB_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(${PY_LIB_NAME} PRIVATE pybind11::pybind11 pybind11::headers pybind11::module pybind11::lto)
+pybind11_extension(${PY_LIB_NAME})
+if(NOT MSVC AND NOT ${CMAKE_BUILD_TYPE} MATCHES Debug|RelWithDebInfo)
+    # Strip unnecessary sections of the binary on Linux/macOS
+    pybind11_strip(${PY_LIB_NAME})
+endif()
