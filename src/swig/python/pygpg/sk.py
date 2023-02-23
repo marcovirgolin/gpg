@@ -126,10 +126,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
         # convert this model to a constant, i.e., the mean over the training y
         models[i] = sympy.sympify(np.mean(y))
         p = np.array([np.mean(y)]*len(y))
-      else:
-        err = mean_squared_error(y, p)
-        if err > max_err:
-          max_err = err
+      err = mean_squared_error(y, p)
+      if err > max_err:
+        max_err = err
       errs.append(err)
     # adjust errs
     errs = [err if not np.isnan(err) else max_err + 1e-6 for err in errs]
