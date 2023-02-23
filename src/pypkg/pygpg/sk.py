@@ -112,23 +112,29 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       else:
         models = [ft.finetune(m, X, y) for m in models]
 
+    # suppose all models failed
+    if len(models) == 0:
+      # then we return a constant model, the mean over the training data
+      models = [sympy.sympify(np.mean(y))]
+
     # pick best
     errs = list()
     max_err = 0
-    for m in models:
+    for i, m in enumerate(models):
       p = self.predict(X, model=m)
       if np.isnan(p).any():
-        err = float("nan")
-      else:
-        err = mean_squared_error(y, p)
-        if err > max_err:
-          max_err = err
+        # convert this model to a constant, i.e., the mean over the training y
+        models[i] = sympy.sympify(np.mean(y))
+        p = np.array([np.mean(y)]*len(y))
+      err = mean_squared_error(y, p)
+      if err > max_err:
+        max_err = err
       errs.append(err)
     # adjust errs
     errs = [err if not np.isnan(err) else max_err + 1e-6 for err in errs]
 
     if hasattr(self, "rci") and len(models) > 1:
-      complexity_metric = "node_count" if not hasattr(self, "compl") else self.compl
+      complexity_metric = "component_count" if not hasattr(self, "compl") else self.compl
       compls = [complexity.compute_complexity(m, complexity_metric) for m in models]
       best_idx = complexity.determine_rci_best(errs, compls, self.rci)
     else:
@@ -156,7 +162,11 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
       assert(hasattr(self, "imputer"))
       X = self.imputer.transform(X)
 
-    prediction = f(X)
+    try:
+      prediction = f(X)
+    except:
+      print("[!] Warning: failed to evaluate sympy model, returning NaN as prediction")
+      return float("nan")
     
     # can still happen for certain classes of sympy 
     # (e.g., sympy.core.numbers.Zero)
