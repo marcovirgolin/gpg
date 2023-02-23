@@ -33,6 +33,7 @@ namespace g {
 
   // representation
   int max_depth;
+  int max_arity = 0; // set automatically once chosen the operators
   string init_strategy;
   vector<string> operators;
   vector<string> terminals;
@@ -92,6 +93,10 @@ namespace g {
         throw runtime_error("Unrecognized function: "+sym);
       }
       operators.push_back(sym);
+      int arity = all_operators[sym].second;
+      if (arity > max_arity) {
+        max_arity = arity;
+      }
     }
   }
 

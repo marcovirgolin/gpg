@@ -53,6 +53,15 @@ struct Evolution {
       already_generated.insert(str_indiv);
       g::fit_func->get_fitness(indiv);
       population.push_back(indiv);
+
+      /*auto genome = indiv->genome;
+      print(genome);
+      print(indiv->to_prefix_notation());
+      print(indiv->to_infix_notation());
+      print(indiv->get_num_components());
+      auto active_indices = indiv->get_active_indices();
+      print(active_indices);
+      exit(0);*/
     }
   } 
 

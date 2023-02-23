@@ -62,7 +62,7 @@ namespace variation {
     }
     int tot_num_components = (pow(max_arity, max_depth + 1) - 1) / (max_arity - 1);
 
-    Individual * indiv = new Individual();
+    Individual * indiv = new Individual(g::max_arity);
     indiv->genome.reserve(tot_num_components+1);
 
     // build individual
@@ -233,6 +233,7 @@ namespace variation {
     return indiv;
   }
 
+/*
   Individual * gom(Individual * parent, const vector<Individual*> & population, vector<vector<int>> & fos) {
     Individual * indiv = parent->clone();
     vector<string> backup_genome = parent->genome;
@@ -252,9 +253,83 @@ namespace variation {
           continue;
         }
         something_changed = true;
+        // TODO: instead of 'something changed', store which indices changed
+        // then, implement (recursive, in Individual) a method to get which indices are active
+        // check that at least one that changed is active to avoid unnecessary evaluations!
         indiv->genome[idx] = donor_genome[idx];
       }
 
+      if (!something_changed) {
+        // for efficiency, no coeff mut if nothing changed
+        continue;
+      }
+
+      // apply coeff mut
+      coeff_mut(indiv, false);
+
+      // check is not worse
+      float new_fitness = g::fit_func->get_fitness(indiv);
+      if (new_fitness > backup_fitness) {
+        // undo
+        indiv->genome = backup_genome;
+        indiv->fitness = backup_fitness;
+      } else {
+        // retain
+        backup_genome = indiv->genome;
+        backup_fitness = new_fitness;
+      }
+    }
+
+    // variant of forced improvement that is potentially less aggressive, & less expensive to carry out
+    if (g::tournament_size > 1 && !ever_improved) {
+      // make a tournament between tournament size - 1 candidates + indiv
+      vector<Individual*> tournament_candidates; tournament_candidates.reserve(g::tournament_size - 1);
+      for(int i = 0; i < g::tournament_size - 1; i++) {
+        tournament_candidates.push_back(population[Rng::randi(population.size())]);
+      }
+      tournament_candidates.push_back(indiv);
+      Individual * winner = selection::tournament(tournament_candidates, g::tournament_size);
+      // copy that
+      indiv->genome = winner->genome;
+      indiv->fitness = winner->fitness;
+      delete winner;
+    }
+    
+    return indiv;
+  }
+  */
+
+ Individual * gom(Individual * parent, const vector<Individual*> & population, vector<vector<int>> & fos) {
+    Individual * indiv = parent->clone();
+    vector<string> backup_genome = parent->genome;
+    float backup_fitness = parent->fitness;
+
+    auto random_fos_order = Rng::rand_perm(fos.size());
+
+    bool ever_improved = false;
+    for(int i = 0; i < fos.size(); i++) {
+      auto crossover_mask = fos[random_fos_order[i]];
+      // fetch donor
+      vector<string> donor_genome = population[Rng::randi(population.size())]->genome;
+
+      set<int> changed_indices;
+      for(int & idx : crossover_mask) {
+        if (indiv->genome[idx] == donor_genome[idx]) {
+          continue;
+        }
+        indiv->genome[idx] = donor_genome[idx];
+        changed_indices.insert(idx);
+      }
+
+      // check if somethnig changed
+      bool something_changed = false;
+      set<int> active_indices = indiv->get_active_indices();
+      for(int idx : changed_indices) {
+        if (active_indices.count(idx)) {
+          something_changed = true;
+          break;
+        }
+      }
       if (!something_changed) {
         // for efficiency, no coeff mut if nothing changed
         continue;

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <stack>
+#include <set>
 #include "operator.hpp"
 #include "util.hpp"
 
@@ -10,20 +11,23 @@ using namespace std;
 
 struct Individual {
   float fitness;
+  int max_arity;
   vector<string> genome;
 
-  Individual() {
-    fitness = INF;
+  Individual(int max_arity) {
+    this->fitness = INF;
+    this->max_arity = max_arity;
   }
 
   Individual * clone() {
-    Individual * indiv = new Individual();
+    Individual * indiv = new Individual(max_arity);
     indiv->fitness = fitness;
+    indiv->max_arity = max_arity;
     indiv->genome = genome;
     return indiv;
   }
 
-  int get_num_components(bool excl_introns=false) {
+  int get_num_components(bool excl_introns=true) {
     if (!excl_introns)
       return genome.size();
     int num_components = 0;
@@ -39,6 +43,36 @@ struct Individual {
         int jdx = _recursive_get_num_components(stack, num_components, idx + 1);
         idx = jdx;
       }
+      idx += max_arity - op.second;
+    }
+    return idx;
+  }
+
+  set<int> get_active_indices() {
+    set<int> active_indices;
+    _recursive_get_active_indices(genome, active_indices);
+    return active_indices;
+  }
+
+  set<int> get_inactive_indices() {
+    set<int> active_indices = get_active_indices();
+    set<int> inactive_indices;
+    for(int i = 0; i < genome.size(); i++){
+      if (!active_indices.count(i))
+        inactive_indices.insert(i);
+    }
+    return inactive_indices;
+  }
+
+  int _recursive_get_active_indices(const vector<string> &stack, set<int> & active_indices, int idx=0) {
+    active_indices.insert(idx);  
+    if (all_operators.count(stack[idx])) {      
+      auto op = all_operators[stack[idx]];
+      for (int i = 0; i < op.second; i++) {
+        int jdx = _recursive_get_active_indices(stack, active_indices, idx + 1);
+        idx = jdx;
+      }
+      idx += max_arity - op.second;
     }
     return idx;
   }
@@ -59,6 +93,7 @@ struct Individual {
         int jdx = _recursive_to_prefix_notation(stack, prefix_notation, idx + 1);
         idx = jdx;
       }
+      idx += max_arity - op.second;
     }
     return idx;
   }
@@ -109,6 +144,7 @@ struct Individual {
         args.push_back(res);
         idx = jdx;
       }
+      idx += max_arity - op.second;
       return {op.first(args), idx};
     } else if (stack[idx][0] == 'x') {
       int feat_idx = stoi(stack[idx].substr(2));
