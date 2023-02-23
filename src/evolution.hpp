@@ -33,8 +33,6 @@ struct Evolution {
       delete fb;
   }
 
- 
-
   void init_pop() {
     unordered_set<string> already_generated;
     population.reserve(pop_size);
@@ -69,11 +67,30 @@ struct Evolution {
     // build linkage tree FOS
     auto fos = fb->build_linkage_tree(population);
 
+    // diversity promotion
+    Vec chance_random_accept = Vec::Zero(pop_size);
+    if (g::diversity_promotion) {
+      // get parent fitnesses
+      vector<float> fitnesses; fitnesses.reserve(pop_size);
+      float max_fitness = -INF; 
+      float min_fitness = INF;
+      for (Individual * indiv : population){
+        fitnesses.push_back(indiv->fitness);
+        if (indiv->fitness > max_fitness)
+          max_fitness = indiv->fitness;
+        if (indiv->fitness < min_fitness)
+          min_fitness = indiv->fitness;
+      }
+      for(int i = 0; i < pop_size; i++) {
+        chance_random_accept[i] = (fitnesses[i] - min_fitness) / (max_fitness - min_fitness);
+      }
+    }
+
     // perform GOM
     vector<Individual*> offspring_population; 
     offspring_population.reserve(pop_size);
     for(int i = 0; i < pop_size; i++) {
-      auto * offspring = variation::gom(population[i], population, fos);
+      auto * offspring = variation::gom(population[i], population, fos, chance_random_accept[i]);
       //check_n_set_elite(offspring);
       offspring_population.push_back(offspring);
     }

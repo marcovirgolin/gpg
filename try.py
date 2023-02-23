@@ -68,16 +68,17 @@ g = GPGRegressor(t=7200, g=-1, e=499500, tour=4, d=5,
         bs=2048,
         finetune_max_evals=500,
         oset='+,-,*,/,log,sqrt,sin,cos', cmp=0.1, rci=0.0,
-        random_state=23654)  
+        random_state=23654,
+        diversity=True)  
 from sklearn.model_selection import KFold
 cv = KFold(n_splits=10, shuffle=True,random_state=23654)
 
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import HalvingGridSearchCV
-grid_est = GridSearchCV(g, param_grid=hyper_params, cv=cv, verbose=0, n_jobs=1, scoring='r2', error_score=0.0)
-grid_est.fit(X_train, y_train)
-g = grid_est.best_estimator_
-#g.fit(X_train,y_train)
+#grid_est = GridSearchCV(g, param_grid=hyper_params, cv=cv, verbose=0, n_jobs=1, scoring='r2', error_score=0.0)
+#grid_est.fit(X_train, y_train)
+#g = grid_est.best_estimator_
+g.fit(X_train,y_train)
 print(g.model)
 p = g.predict(X_test)
 print(r2_score(y_train, g.predict(X_train)), mean_squared_error(y_train, g.predict(X_train)))

@@ -299,7 +299,7 @@ namespace variation {
   }
   */
 
- Individual * gom(Individual * parent, const vector<Individual*> & population, vector<vector<int>> & fos) {
+ Individual * gom(Individual * parent, const vector<Individual*> & population, vector<vector<int>> & fos, float chance_random_accept = 0) {
     Individual * indiv = parent->clone();
     vector<string> backup_genome = parent->genome;
     float backup_fitness = parent->fitness;
@@ -341,18 +341,19 @@ namespace variation {
         continue;
       }
 
-      
-
       // check is not worse
       float new_fitness = g::fit_func->get_fitness(indiv);
-      if (new_fitness > backup_fitness) {
+      if (new_fitness > backup_fitness && !(Rng::randu() < chance_random_accept)) {
         // undo
         indiv->genome = backup_genome;
         indiv->fitness = backup_fitness;
       } else {
         // retain
+        if (new_fitness < backup_fitness) {
+          ever_improved = true;
+          backup_fitness = new_fitness;
+        }
         backup_genome = indiv->genome;
-        backup_fitness = new_fitness;
       }
     }
 
