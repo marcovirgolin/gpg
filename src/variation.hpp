@@ -323,7 +323,7 @@ namespace variation {
 
       // apply coeff mut
       set<int> mutated_indices = coeff_mut(indiv);
-
+      // update changed indices
       set_union(changed_indices.begin(), changed_indices.end(), mutated_indices.begin(), mutated_indices.end(), 
         inserter(changed_indices, changed_indices.begin()));
 
@@ -337,11 +337,10 @@ namespace variation {
         }
       }
       if (!something_changed) {
-        // for efficiency, no coeff mut if nothing changed
-        continue;
+        // keep diversity in genome
+        backup_genome = indiv->genome;
+        continue; // no need to re-evaluate
       }
-
-      
 
       // check is not worse
       float new_fitness = g::fit_func->get_fitness(indiv);
@@ -351,8 +350,11 @@ namespace variation {
         indiv->fitness = backup_fitness;
       } else {
         // retain
+        if (new_fitness < backup_fitness) {
+          ever_improved = true;
+          backup_fitness = new_fitness;
+        }
         backup_genome = indiv->genome;
-        backup_fitness = new_fitness;
       }
     }
 
