@@ -86,7 +86,7 @@ Node * generate_tree(int max_depth, string init_type="hh") {
   return tree;
 }
 
-Node * coeff_mut(Node * parent, bool return_copy=true) {
+Node * coeff_mut(Node * parent, bool return_copy=true, vector<int> * changed_indices = NULL) {
   Node * tree = parent;
   if (return_copy) {
     tree = parent->clone();
@@ -95,7 +95,8 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
   if (g::cmut_prob > 0 && g::cmut_temp > 0) {
     // apply coeff mut to all nodes that are constants
     vector<Node*> nodes = tree->subtree();
-    for(Node * n : nodes) {
+    for(int i = 0; i < nodes.size(); i++) {
+      Node * n = nodes[i];
       if (
         n->op->type() == OpType::otConst &&
         Rng::randu() < g::cmut_prob
@@ -107,6 +108,9 @@ Node * coeff_mut(Node * parent, bool return_copy=true) {
           std = g::cmut_eps;
         float mutated_c = roundd(c * Rng::randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
+        if (changed_indices != NULL) {
+          changed_indices->push_back(i);
+        }
       }
     }
   }
@@ -234,7 +238,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     }
 
     // apply coeff mut
-    coeff_mut(offspring, false);
+    coeff_mut(offspring, false, &effectively_changed_indices);
 
     // check if at least one change was meaningful
     for(int i : effectively_changed_indices) {
