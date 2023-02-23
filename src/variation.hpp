@@ -169,17 +169,16 @@ namespace variation {
   }
   */
 
-  Individual * coeff_mut(Individual * parent, bool return_copy=true) {
-    Individual * indiv = parent;
-    if (return_copy) {
-      indiv = parent->clone();
-    }
+  set<int> coeff_mut(Individual * indiv) {
+    // NOTE: this method changes constants IN PLACE, does not create a copy of the individual
+
+    set<int> changed_indices;
     
     if (g::cmut_prob > 0 && g::cmut_temp > 0) {
       // apply coeff mut to all components that are constants
       for(int i = 0; i < indiv->genome.size(); i++) {
         string sym = indiv->genome[i];
-        // check it is a constant
+        // check it is a constant & should be mutated
         if (all_operators.count(sym) || sym[0] == 'x' || Rng::randu() >= g::cmut_prob) {
           continue;
         }
@@ -189,9 +188,10 @@ namespace variation {
           std = g::cmut_eps;
         float mutated_c = roundd(c + Rng::randn()*std, NUM_PRECISION); 
         indiv->genome[i] = to_string(mutated_c);
+        changed_indices.insert(i);
       }
     }
-    return indiv;
+    return changed_indices;
   }
 
   vector<int> _sample_crossover_mask(int num_components) {
@@ -321,6 +321,12 @@ namespace variation {
         changed_indices.insert(idx);
       }
 
+      // apply coeff mut
+      set<int> mutated_indices = coeff_mut(indiv);
+
+      set_union(changed_indices.begin(), changed_indices.end(), mutated_indices.begin(), mutated_indices.end(), 
+        inserter(changed_indices, changed_indices.begin()));
+
       // check if somethnig changed
       bool something_changed = false;
       set<int> active_indices = indiv->get_active_indices();
@@ -335,8 +341,7 @@ namespace variation {
         continue;
       }
 
-      // apply coeff mut
-      coeff_mut(indiv, false);
+      
 
       // check is not worse
       float new_fitness = g::fit_func->get_fitness(indiv);
