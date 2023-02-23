@@ -66,6 +66,7 @@ g = GPGRegressor(t=7200, g=-1, e=499500, tour=4, d=5,
         finetune=True, 
         verbose=True,
         bs=2048,
+        finetune_max_evals=500,
         oset='+,-,*,/,log,sqrt,sin,cos', cmp=0.1, rci=0.0,
         random_state=23654)  
 from sklearn.model_selection import KFold
