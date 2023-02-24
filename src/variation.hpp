@@ -86,7 +86,7 @@ Node * generate_tree(int max_depth, string init_type="hh") {
   return tree;
 }
 
-Node * coeff_mut(Node * parent, bool return_copy=true, vector<int> * changed_indices = NULL) {
+Node * coeff_mut(Node * parent, bool return_copy=true, vector<int> * changed_indices = NULL, vector<Op*> * backup_ops = NULL) {
   Node * tree = parent;
   if (return_copy) {
     tree = parent->clone();
@@ -102,14 +102,15 @@ Node * coeff_mut(Node * parent, bool return_copy=true, vector<int> * changed_ind
         Rng::randu() < g::cmut_prob
         ) {
 
-        float c = ((Const*)n->op)->c;
-        float std = g::cmut_temp*abs(c);
+        float prev_c = ((Const*)n->op)->c;
+        float std = g::cmut_temp*abs(prev_c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
-        float mutated_c = roundd(c * Rng::randn()*std, NUM_PRECISION); 
+        float mutated_c = roundd(prev_c + Rng::randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
         if (changed_indices != NULL) {
           changed_indices->push_back(i);
+          backup_ops->push_back(new Const(prev_c));
         }
       }
     }
@@ -238,7 +239,7 @@ Node * efficient_gom(Node * parent, vector<Node*> & population, vector<vector<in
     }
 
     // apply coeff mut
-    coeff_mut(offspring, false, &effectively_changed_indices);
+    coeff_mut(offspring, false, &effectively_changed_indices, &backup_ops);
 
     // check if at least one change was meaningful
     for(int i : effectively_changed_indices) {
