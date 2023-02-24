@@ -322,9 +322,9 @@ namespace variation {
       }
 
       // apply coeff mut
-      set<int> mutated_indices = coeff_mut(indiv);
+      set<int> coeff_mutated_indices = coeff_mut(indiv);
       // update changed indices
-      set_union(changed_indices.begin(), changed_indices.end(), mutated_indices.begin(), mutated_indices.end(), 
+      set_union(changed_indices.begin(), changed_indices.end(), coeff_mutated_indices.begin(), coeff_mutated_indices.end(), 
         inserter(changed_indices, changed_indices.begin()));
 
       // check if somethnig changed
