@@ -1,11 +1,23 @@
 # Mirrors complexity.cpp
 import numpy as np
+import sympy
 
 def compute_complexity(model, complexity_metric="node_count"):
   if complexity_metric == "node_count":
-    return model.count_ops(visual=False)
+    c = 0
+    for _ in sympy.preorder_traversal(model):
+      c += 1
+    return c
   else:
     raise ValueError("Unrecognized complexity metric", complexity_metric)
+  
+def get_num_coefficients(model):
+  c = 0
+  sp_model = sympy.sympify(str(model))
+  for el in sympy.preorder_traversal(sp_model):
+    if isinstance(el, sympy.Float):
+      c += 1
+  return c
 
 def determine_rci_best(errors, complexities, rci=0.1) -> int:
   assert(len(errors) == len(complexities))
