@@ -51,7 +51,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     attributes = inspect.getmembers(self, lambda a:not(inspect.isroutine(a)))
     attributes = [x for x in attributes if not 
       ((x[0].startswith("__") and x[0].endswith("__")) or 
-      x[0] in ["_estimator_type", "finetune_max_evals"])]
+      x[0] in ["_estimator_type"])]
 
     dic = {}
     for a in attributes:
