@@ -29,9 +29,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     s = ""
     for k in kwargs:
       # skip python-only params
-      if k == "_pb_gpg":
-        print(k)
-      if k in ["finetune", "model", "_pb_gpg"]:
+      if k in ["finetune", "model", "finetune_max_evals"]:
         continue
 
       # handle bool flags for c++ 
@@ -53,7 +51,7 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     attributes = inspect.getmembers(self, lambda a:not(inspect.isroutine(a)))
     attributes = [x for x in attributes if not 
       ((x[0].startswith("__") and x[0].endswith("__")) or 
-      x[0] in ["_estimator_type", "_gpg_cpp"])]
+      x[0] in ["_estimator_type", "finetune_max_evals"])]
 
     dic = {}
     for a in attributes:
@@ -82,6 +80,39 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
     # extract the model as a sympy and store it internally
     self.model = self._pick_best_model(X, y, models)
+
+
+  def _finetune_multiple_models(self, models, X, y):
+    import finetuning as ft
+    if hasattr(self, "verbose") and self.verbose:
+      print(f"finetuning {len(models)} models...")
+
+    if len(X) > 10000:
+      print("[!] Warning: finetuning on large datasets (>10,000 obs.) can be slow, skipping...")
+    else:
+      if hasattr(self, "finetune_max_evals"):
+        # scatter finetuning over all models based on their number of coefficients
+        num_coeffs = [complexity.get_num_coefficients(m) for m in models]
+        tot = sum(num_coeffs)
+        finetune_num_steps = [int(self.finetune_max_evals * (n / tot)) for n in num_coeffs]
+        while sum(finetune_num_steps) < self.finetune_max_evals:
+          finetune_num_steps[np.random.randint(len(models))] += 1
+      else:
+        finetune_num_steps = [100]*len(models)
+
+      for i, m in enumerate(models):
+        models[i], steps_done = ft.finetune(m, X, y, n_steps = finetune_num_steps[i])
+        steps_leftover = finetune_num_steps[i] - steps_done
+        # scatter steps left over all models
+        if i+1 < len(models):
+          models_left = len(models) - i - 1
+          steps_left_per_model = int(steps_leftover / models_left)
+          reminder = steps_leftover % models_left
+          for j in range(i+1, len(models)):
+            finetune_num_steps[j] += steps_left_per_model
+          # and scatter remainder
+          for j in range(reminder):
+            finetune_num_steps[np.random.randint(i+1, len(models))] += 1
     
 
   def _pick_best_model(self, X, y, models):
@@ -103,15 +134,8 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
 
     # finetune  
     if hasattr(self, "finetune") and self.finetune:
-      import finetuning as ft
-      if hasattr(self, "verbose") and self.verbose:
-        print(f"finetuning {len(models)} models...")
-
-      if len(X) > 10000:
-        print("[!] Warning: finetuning on large datasets (>10,000 obs.) can be slow, skipping...")
-      else:
-        models = [ft.finetune(m, X, y) for m in models]
-
+      self._finetune_multiple_models(models, X, y)
+        
     # pick best
     errs = list()
     max_err = 0

@@ -5,10 +5,13 @@ import sympy
 from copy import deepcopy
 import re
 
-
+"""
+Fine-tunes a sympy model. Returns the fine-tuned model and the number of steps used.
+If it terminates prematurely, the number of steps used is returned as well.
+"""
 def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100, 
   tol_grad=1e-9, tol_change=1e-9):
-
+  
   best_torch_model, best_loss = None, np.infty
 
   if not isinstance(X, torch.TensorType):
@@ -30,10 +33,10 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
     torch_model = C.sympy_to_torch(sympy_model, timeout=5)
   except TypeError:
     print("[!] Warning: invalid conversion from sympy to torch pre fine-tuning")
-    return sympy_model
+    return sympy_model, 0
   if torch_model is None:
     print("[!] Warning: failed to convert from sympy to torch within a reasonable time")
-    return sympy_model
+    return sympy_model, 0
 
   x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
 
@@ -45,18 +48,20 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
       tolerance_grad=tol_grad, 
       tolerance_change=tol_change)
   except ValueError:
-    return sympy_model
+    return sympy_model, 0
 
   prev_loss = np.infty
   batch_x = x_args
   batch_y = y
+  steps_done = 0
   for _ in range(n_steps):
+    steps_done += 1
     optimizer.zero_grad()
     try:
       p = torch_model(**batch_x).squeeze(-1)
     except TypeError:
       print("[!] Warning: error during forward call of torch model while fine-tuning")
-      return sympy_model
+      return sympy_model, steps_done
     loss = (p-batch_y).pow(2).mean().div(2)
     loss.retain_grad()
     loss.backward()
@@ -72,5 +77,5 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
   result = best_torch_model.sympy()[0] if best_torch_model else sympy_model
   result = C.timed_simplify(result, timeout=5)
   if result is None:
-    return sympy_model
-  return result
+    return sympy_model, steps_done
+  return result, steps_done
