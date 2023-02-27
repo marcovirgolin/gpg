@@ -283,7 +283,7 @@ struct IMS {
     // if abs corr, append linear scaling terms
     if (g::fit_func->name() == "ac") {
       for (auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
-        elites_per_complexity[it->first] = variation::append_linear_scaling(it->second);
+        variation::set_linear_scaling(it->second);
       }
     }
 

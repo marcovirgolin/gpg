@@ -376,17 +376,14 @@ namespace variation {
     return indiv;
   }
 
-  Individual * append_linear_scaling(Individual * indiv) {
-    // compute intercept and scaling coefficients, pre-pend them
+  void set_linear_scaling(Individual * indiv) {
+    // compute intercept and scaling coefficients, set them
     Vec p = indiv->eval(g::fit_func->X_train);
 
     pair<float,float> intc_slope = linear_scaling_coeffs(g::fit_func->y_train, p);
     
-    vector<string> to_prepend = {"+", to_string(intc_slope.first), "*", to_string(intc_slope.second)};
-    indiv->genome.insert(indiv->genome.begin(), to_prepend.begin(), to_prepend.end());
-
-    return indiv;
-
+    indiv->linear_scaling_intercept = intc_slope.first;
+    indiv->linear_scaling_slope = intc_slope.second;
   }
 
 }

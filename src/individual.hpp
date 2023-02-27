@@ -14,9 +14,14 @@ struct Individual {
   int max_arity;
   vector<string> genome;
 
+  float linear_scaling_intercept;
+  float linear_scaling_slope;
+
   Individual(int max_arity) {
     this->fitness = INF;
     this->max_arity = max_arity;
+    this->linear_scaling_intercept = 0;
+    this->linear_scaling_slope = 1;
   }
 
   Individual * clone() {
@@ -24,6 +29,8 @@ struct Individual {
     indiv->fitness = fitness;
     indiv->max_arity = max_arity;
     indiv->genome = genome;
+    indiv->linear_scaling_intercept = linear_scaling_intercept;
+    indiv->linear_scaling_slope = linear_scaling_slope;
     return indiv;
   }
 
@@ -82,6 +89,13 @@ struct Individual {
     _recursive_to_prefix_notation(genome, s);
     // remove trailing comma
     s = s.substr(0, s.size()-1);
+    // add linear scaling (if set)
+    if (linear_scaling_slope != 1) {
+      s = "*,"+to_string(linear_scaling_slope)+","+s;
+    }
+    if (linear_scaling_intercept != 0) {
+      s = "+,"+to_string(linear_scaling_intercept)+","+s;
+    }
     return s;
   }
 
