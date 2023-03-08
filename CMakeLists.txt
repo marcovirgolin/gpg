@@ -33,6 +33,7 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 # Include python libraries
+find_package(Python3 COMPONENTS NumPy REQUIRED)
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_PATH})
@@ -57,7 +58,7 @@ add_executable(${PROJECT_NAME} src/main.cpp )
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 # linking
-target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES} Python3::NumPy)
 
 # Do not check for CTRL+C from Python for the standalone executable
 target_compile_definitions(${PROJECT_NAME} PUBLIC CLI=1)
@@ -76,6 +77,6 @@ set_property(TARGET pyface PROPERTY SWIG_COMPILE_OPTIONS -c++)
 target_include_directories(pyface PRIVATE src)
 target_include_directories(pyface PRIVATE src/swig/python)
 target_include_directories(pyface PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(pyface ${PYTHON_LIBRARIES})
+target_link_libraries(pyface ${PYTHON_LIBRARIES} Python3::NumPy)
 target_compile_definitions(pyface PUBLIC PYLIB=1)
 target_compile_definitions(pyface PUBLIC NUM_PRECISION=${NUM_PRECISION})
