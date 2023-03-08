@@ -49,5 +49,5 @@ est = GPGR(t=2*60*60, g=-1, e=499500,
 ```
 
 ## Branches
-- `swig` and `pybind` are the same, with the exception that the first uses SWIG and the second uses pybind to realize the python interface.
+- `swig` and `pybind` are the same, with the exception that the first uses SWIG and the second uses pybind to realize the python interface. `pybind` is now default and, probably, `swig` will no longer be supported/updated.
 - `vector_repr` represents an expression as a vector of strings instead of a tree of nodes. This version may be slightly faster (matters only when the number of observations in the data set is relatively small). However it needs to be [fixed](https://github.com/marcovirgolin/gpg/issues/10).
