@@ -30,6 +30,7 @@ if(NOT EIGEN3_INCLUDE_DIR)
 endif()
 
 # Include python libraries
+find_package(Python3 COMPONENTS NumPy REQUIRED)
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_PATH})
@@ -59,6 +60,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 # linking
 target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES} Python3::NumPy)
 target_link_libraries(${PROJECT_NAME} pybind11::headers)
 
 # Do not check for CTRL+C from Python for the standalone executable
@@ -72,6 +74,7 @@ set_target_properties(${PY_LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_definitions(${PY_LIB_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
 target_include_directories(${PY_LIB_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PY_LIB_NAME} PRIVATE pybind11::pybind11 pybind11::headers pybind11::module pybind11::lto)
+target_link_libraries(pyface ${PYTHON_LIBRARIES} Python3::NumPy)
 pybind11_extension(${PY_LIB_NAME})
 if(NOT MSVC AND NOT ${CMAKE_BUILD_TYPE} MATCHES Debug|RelWithDebInfo)
     # Strip unnecessary sections of the binary on Linux/macOS
