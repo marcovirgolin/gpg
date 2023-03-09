@@ -10,6 +10,11 @@ Here's a list:
 - Models returned from the C++ code are simplified and (optionally) fine-tuned in Python
 - Elite at multiple levels of complexity (expression size) are stored and returned to Python (a "best one" is selected using the `rci` parameter)
 - If the IMS is disabled and the population converges before the budget is exhausted, then a new population is started which includes a random elite from those found before
+- A simple feature selection mechanism is included (if desired)
+- Models obtained from C++ are converted to `sympy` and can be further processed as such
+- The scikit-learn interface includes imputation in case of incomplete data
+- The scikit-learn interface includes coefficient fine-tuning with `sympy-torch` and L-BFGS
+- The choice of a best model can be based on a trade-off between accuracy and simplicity (`rci` parameter)
 
 ## Results on SRBench
 Running this version on SRBench (GP-GOMEAv2) leads to expressions that are as compact but more accurate than those of the original GP-GOMEA.
