@@ -55,6 +55,21 @@ est = GPGR(t=2*60*60, g=-1, e=499500,
         )
 ```
 
+## Research
+If you use our code for academic purposes, please support our research by citing:
+```
+@article{virgolin2021improving,
+  title={Improving model-based genetic programming for symbolic regression of small expressions},
+  author={Virgolin, Marco and Alderliesten, Tanja and Witteveen, Cees and Bosman, Peter A. N.},
+  journal={Evolutionary Computation},
+  volume={29},
+  number={2},
+  pages={211--237},
+  year={2021},
+  publisher={MIT Press}
+}
+```
+
 ## Branches
 - `swig` and `pybind` are the same, with the exception that the first uses SWIG and the second uses pybind to realize the python interface. `pybind` is now default and, probably, `swig` will no longer be supported/updated.
 - `vector_repr` represents an expression as a vector of strings instead of a tree of nodes. This version may be slightly faster (matters only when the number of observations in the data set is relatively small). However it needs to be [fixed](https://github.com/marcovirgolin/gpg/issues/10).
