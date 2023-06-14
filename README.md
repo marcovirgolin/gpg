@@ -19,7 +19,7 @@ Here's a list:
 
 
 ## Results on SRBench
-Running this version on SRBench (GP-GOMEAv2) leads to expressions that are as compact but more accurate than those of the original GP-GOMEA.
+Running this version on SRBench (GP-GOMEAv2) leads to expressions that are as compact but more accurate than those of the original GP-GOMEA, in much less time!
 
 <img src=pics/srbench.png alt="blackbox_results" width=800px />
 <img src=pics/srbench_pareto.png alt="pareto_results" width=800px />
