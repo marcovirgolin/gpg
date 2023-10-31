@@ -13,5 +13,5 @@ setup (name = 'pygpg',
        packages=['pygpg'],
 	package_data={'pygpg': ['_pb_gpg.so']},
        include_package_data=True,
-       install_requires=['scikit-learn', 'sympy'],
+       install_requires=['scikit-learn', 'sympy', 'pandas'],
        )

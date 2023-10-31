@@ -1,6 +1,12 @@
-cmake_minimum_required(VERSION 3.17)  # CMake version check
+cmake_minimum_required(VERSION 3.27)  # CMake version check
 cmake_policy(SET CMP0026 NEW)
 cmake_policy(SET CMP0051 NEW)
+
+function(debug_message messages)
+  message(STATUS "\n")
+  message(STATUS "${messages}")
+  message(STATUS "\n")
+endfunction()
 
 # Variables
 set(PROJECT_NAME gpg)
@@ -26,19 +32,15 @@ set(PYBIND11_CPP_STANDARD -std=c++17)
 find_package(Eigen3 REQUIRED)
 set(EIGEN3_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}")
 if(NOT EIGEN3_INCLUDE_DIR)
-  message( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
+  message(FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 endif()
 
 # Include python libraries
-find_package(Python3 COMPONENTS NumPy REQUIRED)
-find_package(PythonLibs REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${PYTHON_INCLUDE_PATH})
+find_package(Python COMPONENTS Interpreter Development NumPy REQUIRED)
+debug_message("Found Python\n\tDIRS: ${Python_INCLUDE_DIRS}\t${Python_NumPy_INCLUDE_DIRS}\n\tLIBS: ${Python_LIBRARIES}")
 
 # Include pybind11
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
-
 
 ### Compilation flags
 
@@ -57,23 +59,22 @@ add_executable(${PROJECT_NAME} src/main.cpp )
 
 # Seek directories for compilation
 target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${Python_INCLUDE_DIRS} ${Python_NumPy_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 # linking
-target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES} Python3::NumPy)
-target_link_libraries(${PROJECT_NAME} pybind11::headers)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Python_LIBRARIES} Python::NumPy pybind11::headers)
 
 # Do not check for CTRL+C from Python for the standalone executable
 target_compile_definitions(${PROJECT_NAME} PUBLIC CLI=1)
 target_compile_definitions(${PROJECT_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
 
 ### Pybind interface (pyfe)
-#pybind11_add_module(pyfe src/python_interface.hpp)
 add_library(${PY_LIB_NAME} MODULE src/python_interface.cpp)
 set_target_properties(${PY_LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_definitions(${PY_LIB_NAME} PUBLIC NUM_PRECISION=${NUM_PRECISION})
+target_include_directories(${PY_LIB_NAME} PUBLIC ${Python_INCLUDE_DIRS} ${Python_NumPy_INCLUDE_DIRS})
 target_include_directories(${PY_LIB_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(${PY_LIB_NAME} PRIVATE pybind11::pybind11 pybind11::headers pybind11::module pybind11::lto Python3::NumPy)
+target_link_libraries(${PY_LIB_NAME} PRIVATE pybind11::pybind11 pybind11::headers pybind11::module pybind11::lto Python::NumPy)
 pybind11_extension(${PY_LIB_NAME})
 if(NOT MSVC AND NOT ${CMAKE_BUILD_TYPE} MATCHES Debug|RelWithDebInfo)
     # Strip unnecessary sections of the binary on Linux/macOS

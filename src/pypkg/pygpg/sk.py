@@ -5,6 +5,7 @@ import sys, os
 import inspect
 import numpy as np
 import sympy
+import pandas as pd
 
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pygpg'))
@@ -69,7 +70,14 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
   def fit(self, X, y):
     # setup cpp interface
     cpp_options = self._create_cpp_option_string()
-
+    
+    # conver to numpy if it is a pandas dataframe
+    if isinstance(X, pd.DataFrame):
+      X = X.values
+      
+    if isinstance(y, pd.Series):
+      y = y.values
+    
     # impute if needed
     if np.isnan(X).any():
       self.imputer, X = imputing.fit_and_apply_imputation(X)
@@ -116,6 +124,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     
 
   def _pick_best_model(self, X, y, models):
+    
+    
+    
     # simplify (with stopping)
     if hasattr(self, "verbose") and self.verbose:
       print(f"simplifying {len(models)} models...")
@@ -166,6 +177,9 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     if model is None:
       # assume implicitly wanted the best one found at fit
       model = self.model
+      
+    if isinstance(X, pd.DataFrame):
+      X = X.values
 
     # deal with a model that was simplified to a simple constant
     if type(model) == sympy.Float or type(model) == sympy.Integer:

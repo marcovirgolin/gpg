@@ -161,8 +161,8 @@ struct AbsCorrFitness : Fitness {
 
     float fitness = 1.0-abs(corr(y, out));
     // Below, the < 0 can happen due to float overflow, while 
-    // the = 0 is meant to penalize constants as much as broken solutions
-    if (isnan(fitness) || fitness <= 0) 
+    // the ==1 is meant to penalize constants as much as broken solutions
+    if (isnan(fitness) || fitness < 0 || fitness == 1) 
       fitness = INF;
     n->fitness = roundd(fitness, NUM_PRECISION + 2);
 
