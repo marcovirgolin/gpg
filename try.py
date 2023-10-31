@@ -1,87 +1,58 @@
 import numpy as np
 from pygpg.sk import GPGRegressor
+from pygpg.complexity import compute_complexity
 from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
-np.random.seed(42)
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
 
+X = np.random.randn(128, 3)*10
 
-X = np.random.randn(24, 3)*10
-
-def grav_law(X):
-  return 6.67 * X[:,0]*X[:,1]/(np.square(X[:,2]))
+def grav_law(X : np.ndarray) -> np.ndarray:
+    """Ground-truth function for the gravity law."""
+    return 6.67 * X[:,0]*X[:,1]/(np.square(X[:,2])) + np.random.randn(X.shape[0])*0.1 # some noise
 
 y = grav_law(X)
 
-#from sklearn.datasets import load_boston
-from sklearn.preprocessing import StandardScaler as SS
-from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=RANDOM_SEED)
 
-#X, y = load_boston(return_X_y=True)
+gpg = GPGRegressor(
+  e=50_000,                   # 50,000 evaluations limit for search
+  t=-1,                       # no time limit,
+  g=-1,                       # no generation limit,
+  d=3,                        # maximum tree depth
+  finetune=True,              # whether to fine-tune the coefficients after the search
+  finetune_max_evals=10_000,  # 10,000 evaluations limit for fine-tuning
+  verbose=True,               # print progress
+  random_state=RANDOM_SEED,   # for reproducibility
+)
+#gpg = GPGRegressor(
+#  t=10, g=-1, e=100000, disable_ims=False, pop=512,
+#  fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
+#  nolink=False, feat_sel=False, no_large_fos=True, bs=512,
+#  d=5, rci=0.05, finetune=False, verbose=True, tour=4, random_state=42, cmp=0.0
+#)
 
+gpg.fit(X_train,y_train)
+print(
+  "Best found:",
+  gpg.model, 
+  "(complexity: {})".format(compute_complexity(gpg.model, complexity_metric="node_count")))
+print("Train\t\tR2: {}\t\tMSE: {}".format(
+  np.round(r2_score(y_train, gpg.predict(X_train)), 3),
+  np.round(mean_squared_error(y_train, gpg.predict(X_train)), 3),
+))
+print("Test\t\tR2: {}\t\tMSE: {}".format(
+  np.round(r2_score(y_test, gpg.predict(X_test)), 3),
+  np.round(mean_squared_error(y_test, gpg.predict(X_test)), 3),
+))
 
-"""
-Load 618_fri_c3_1000_50
-"""
-
-hyper_params = [
-    { # 1
-     'd' : (3,), 'rci' : (0.0,),
-    },
-    { # 2
-     'd' : (4,), 'rci' : (0.0, 0.1),
-    },
-    { # 2
-     'd' : (5,), 'rci' : (0.0, 0.1,),
-    },
-    { # 1
-     'd' : (6,), 'rci' : (0.1,),  'no_univ_exc_leaves_fos' : (True,),
-    },
-]
-
-# load poker
-import pandas as pd
-df = pd.read_csv("../pmlb/datasets/618_fri_c3_1000_50/618_fri_c3_1000_50.tsv.gz", compression='gzip', sep='\t')
-X = df.drop(columns=['target']).to_numpy()
-y = df['target'].to_numpy()
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=23654)
-s = SS()
-X_train = s.fit_transform(X_train)
-X_test = s.transform(X_test)
-y_train = s.fit_transform(y_train.reshape((-1,1)))
-y_test = s.transform(y_test.reshape((-1,1)))
-
-
-from sklearn.base import clone
-
-#g = GPGRegressor(t=7200, g=-1, e=500000, disable_ims=True, pop=1024, fset="+,-,*,/,sqrt,log,sin,cos", ff="ac",
-#  nolink=False, feat_sel=10, no_large_fos=True, bs=100,
-#  d=4, rci=0.0, finetune=False, verbose=True, tour=4, random_state=42, cmp=0.0)
-
-#
-g = GPGRegressor(t=7200, g=-1, e=499500, tour=4, d=5,
-        disable_ims=True, pop=1024, nolink=True, feat_sel=16,
-        no_large_fos=True, no_univ_exc_leaves_fos=False,
-        finetune=True, 
-        verbose=True,
-        bs=2048,
-        fset='+,-,*,/,log,sqrt,sin,cos', cmp=0.1, rci=0.0,
-        random_state=23654)  
-from sklearn.model_selection import KFold
-cv = KFold(n_splits=10, shuffle=True,random_state=23654)
-
-from sklearn.experimental import enable_halving_search_cv # noqa
-from sklearn.model_selection import HalvingGridSearchCV
-grid_est = GridSearchCV(g, param_grid=hyper_params, cv=cv, verbose=0, n_jobs=1, scoring='r2', error_score=0.0)
-grid_est.fit(X_train, y_train)
-g = grid_est.best_estimator_
-#g.fit(X_train,y_train)
-print(g.model)
-p = g.predict(X_test)
-print(r2_score(y_train, g.predict(X_train)), mean_squared_error(y_train, g.predict(X_train)))
-print(r2_score(y_test, p), mean_squared_error(y_test, p))
 quit()
+
+
+
+
 from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import GridSearchCV
 

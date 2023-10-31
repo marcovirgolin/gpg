@@ -75,6 +75,7 @@ struct Evolution {
     // replace parent with offspring population
     clear_population(population);
     population = offspring_population;
+
     ++gen_number;
   }
 

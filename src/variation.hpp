@@ -100,17 +100,20 @@ Node * coeff_mut(Node * parent, bool return_copy=true, vector<int> * changed_ind
       if (
         n->op->type() == OpType::otConst &&
         Rng::randu() < g::cmut_prob
-        ) {
-
+      ) {
         float prev_c = ((Const*)n->op)->c;
         float std = g::cmut_temp*abs(prev_c);
         if (std < g::cmut_eps)
           std = g::cmut_eps;
         float mutated_c = roundd(prev_c + Rng::randn()*std, NUM_PRECISION); 
         ((Const*)n->op)->c = mutated_c;
+        // case in which we are going through GOM
         if (changed_indices != NULL) {
-          changed_indices->push_back(i);
-          backup_ops->push_back(new Const(prev_c));
+          // add the backup node only if this wasn't changed previously
+          if (find(changed_indices->begin(), changed_indices->end(), i) == changed_indices->end()) {
+            changed_indices->push_back(i);
+            backup_ops->push_back(new Const(prev_c));
+          };
         }
       }
     }

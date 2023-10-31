@@ -43,7 +43,7 @@ struct IMS {
 
       float f = it->second->fitness;
       float c = it->first;
-      
+
       if (f > max_fit)
         max_fit = f;
       if (f < min_fit)
@@ -170,14 +170,16 @@ struct IMS {
 
   void reevaluate_elites() {
     for(auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
+      float fit_before = it->second->fitness;
       g::fit_func->get_fitness(it->second);
     }
   }
 
   void update_elites(vector<Node*>& population) {
     for (Node * tree : population){
-      float c = compute_complexity(tree);
       // determine if to insert this among elites and eliminate now-obsolete elites
+      float c = compute_complexity(tree);
+      // firstly, check if current tree is equal or worse than an existing elite
       bool worse_or_equal_than_existing = false;
       vector<float> obsolete_complexities; obsolete_complexities.reserve(elites_per_complexity.size());
       for(auto it = elites_per_complexity.begin(); it != elites_per_complexity.end(); it++) {
@@ -187,6 +189,7 @@ struct IMS {
           break;
         }
         // check if a previous elite became obsolete
+        // i.e. complexity is equal or less, but fitness is better
         if (c <= it->first && tree->fitness < it->second->fitness) {
           obsolete_complexities.push_back(it->first);
         }  
