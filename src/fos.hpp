@@ -243,12 +243,20 @@ struct FOSBuilder
       for (int i = 0; i < num_random_variables; i++)
       {
         B(i, i) = 1.0 / MI(i, i);
+        B(i,i) = 0.;
+        if(MI(i,i)>0.){
+            B(i, i) = 1.0 / MI(i, i);
+        }
+
         for (int j = i + 1; j < num_random_variables; j++)
         {
           B(i, j) = 2.0 / MI(i, j);
+          B(i, j) = 0.;
+          if(MI(i, j)>0.){
+              B(i, j) = 2.0 / MI(i, j);
+          }
         }
       }
-      first_time = false;
     }
 
     // apply bias
