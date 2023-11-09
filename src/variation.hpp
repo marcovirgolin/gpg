@@ -15,11 +15,12 @@ using namespace std;
 
 Op * _sample_operator(vector<Op *> & operators, Vec & cumul_probs) {
   double r = Rng::randu();
-  int i = 0;
-  while (r > (double) cumul_probs[i]) {
-    i++;
+  for(int i = 0; i<operators.size();i++){
+    if(r <= (double) cumul_probs[i]){
+      return operators[i]->clone(); 
+    }
   }
-  return operators[i]->clone();  
+  return operators[operators.size() - 1]->clone();  
 }
 
 Op * _sample_function() {
