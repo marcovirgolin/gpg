@@ -270,7 +270,7 @@ struct Log : Fun {
   }
 
   string human_repr(vector<string> & args) override {
-    return "sqrt(max(1.0,"+args[0]+"))";
+    return "log(max(1.0,"+args[0]+"))";
   }
 
 };
