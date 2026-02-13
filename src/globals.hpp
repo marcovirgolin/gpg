@@ -17,6 +17,12 @@ using namespace myeig;
 
 namespace g {
 
+  enum linkage_strategy_types {
+    random,
+    mutual_info,
+    node_proximity,
+  };
+
   // ALL operators
   vector<Op*> all_operators = {
     new Add(), new Sub(), new Neg(), new Mul(), new Div(), new Inv(), 
@@ -59,7 +65,7 @@ namespace g {
 
   // variation
   int max_init_attempts = 10000;
-  bool no_linkage;
+  linkage_strategy_types linkage_strategy = node_proximity;
   float cmut_eps;
   float cmut_prob;
   float cmut_temp;
@@ -87,6 +93,18 @@ namespace g {
     }
     if (!found) {
       throw runtime_error("Unrecognized fitness function: "+fit_func_name);
+    }
+  }
+
+  linkage_strategy_types parse_linkage_strategy(string setting) {
+    if (setting == "random") {
+      return linkage_strategy_types::random;
+    } else if (setting == "mutual_info") {
+      return linkage_strategy_types::mutual_info;
+    } else if (setting == "node_proximity") {
+      return linkage_strategy_types::node_proximity;
+    } else {
+      throw runtime_error("Unrecognized linkage strategy: "+setting);
     }
   }
 
@@ -331,7 +349,7 @@ namespace g {
     parser.set_optional<float>("cmp", "coefficient_mutation_probability", 0.1, "Probability of applying coefficient mutation to a coefficient node");
     parser.set_optional<float>("cmt", "coefficient_mutation_temperature", 0.05, "Temperature of coefficient mutation");
     parser.set_optional<int>("tour", "tournament_size", 2, "Tournament size (if tournament selection is active)");
-    parser.set_optional<bool>("nolink", "no_linkage", false, "Disables computing linkage when building the linkage tree FOS, essentially making it random");
+    parser.set_optional<string>("linkstrat", "linkage_strategy", "node_proximity", "Linkage strategy to use when building the linkage tree FOS (random, mutual_info, node_proximity)");
     parser.set_optional<bool>("no_large_fos", "no_large_fos", false, "Whether to discard subsets in the FOS with size > half the size of the genotype (default is false)");
     parser.set_optional<bool>("no_univ_fos", "no_univ_fos", false, "Whether to discard univariate subsets in the FOS (default is false)");
     parser.set_optional<bool>("no_univ_exc_leaves_fos", "no_univ_exc_leaves_fos", false, "Whether to discard univariate subsets except for those that refer to leaves in the FOS (default is false)");
@@ -392,12 +410,11 @@ namespace g {
     tournament_size = parser.get<int>("tour");
     print("tournament size: ", tournament_size);
 
-    no_linkage = parser.get<bool>("nolink");
+    linkage_strategy = parse_linkage_strategy(parser.get<string>("linkstrat"));
     no_large_subsets = parser.get<bool>("no_large_fos");
     no_univariate = parser.get<bool>("no_univ_fos");
     no_univariate_except_leaves = parser.get<bool>("no_univ_exc_leaves_fos");
-    print("compute linkage: ", no_linkage ? "false" : "true", " (FOS trimming-no large: ",no_large_subsets,", no univ.: ",no_univariate,", no. univ. exc. leaves: ",no_univariate_except_leaves,")");
-
+    print("linkage strategy: ", linkage_strategy, " (FOS trimming-no large: ",no_large_subsets,", no univ.: ",no_univariate,", no. univ. exc. leaves: ",no_univariate_except_leaves,")");
     // problem
     string fit_func_name = parser.get<string>("ff");
     set_fit_func(fit_func_name);

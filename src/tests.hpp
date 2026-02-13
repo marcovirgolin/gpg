@@ -7,6 +7,7 @@
 #include "operator.hpp"
 #include "fitness.hpp"
 #include "variation.hpp"
+#include "fos.hpp"
 
 using namespace std;
 using namespace myeig;
@@ -22,6 +23,7 @@ struct Test {
     fitness();
     converge();
     math();
+    tree_distance();
   }
 
   Node * _generate_mock_tree() {
@@ -231,6 +233,60 @@ struct Test {
     assert(order_of_a.isApprox(o));
     Veci r = ranking(a);
     assert(rank_of_a.isApprox(r));
+  }
+
+  void tree_distance() {
+    // Tree: x_0 * (x_1 + x_1)
+    // Pre-order: [* (0), x0 (1), + (2), x1 (3), x1 (4)]
+    //
+    //       * (0)
+    //      / \
+    //   x0(1) +(2)
+    //         / \
+    //       x1(3) x1(4)
+    //
+    Node * mock_tree = _generate_mock_tree();
+    int n = mock_tree->subtree().size();
+    assert(n == 5);
+
+    FOSBuilder fos_builder;
+    Mat D = fos_builder.compute_tree_distance(mock_tree, n);
+
+    // Diagonal should be 0
+    for (int i = 0; i < n; i++) {
+      assert(D(i, i) == 0);
+    }
+
+    // Check symmetry
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        assert(D(i, j) == D(j, i));
+      }
+    }
+
+    // Expected distances:
+    // 0-1: 1 (parent-child)
+    // 0-2: 1 (parent-child)
+    // 0-3: 2 (* -> + -> x1)
+    // 0-4: 2 (* -> + -> x1)
+    // 1-2: 2 (x0 -> * -> +)
+    // 1-3: 3 (x0 -> * -> + -> x1)
+    // 1-4: 3 (x0 -> * -> + -> x1)
+    // 2-3: 1 (parent-child)
+    // 2-4: 1 (parent-child)
+    // 3-4: 2 (x1 -> + -> x1)
+    assert(D(0, 1) == 1);
+    assert(D(0, 2) == 1);
+    assert(D(0, 3) == 2);
+    assert(D(0, 4) == 2);
+    assert(D(1, 2) == 2);
+    assert(D(1, 3) == 3);
+    assert(D(1, 4) == 3);
+    assert(D(2, 3) == 1);
+    assert(D(2, 4) == 1);
+    assert(D(3, 4) == 2);
+
+    mock_tree->clear();
   }
 
 };

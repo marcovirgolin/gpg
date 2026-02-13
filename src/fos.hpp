@@ -23,30 +23,38 @@ struct FOSBuilder
   {
     int num_random_variables = population[0]->subtree().size();
 
-    Mat MI;
+    Mat similarity_matrix;
 
-    if (g::no_linkage)
+    if (g::linkage_strategy == g::linkage_strategy_types::random)
     {
-      MI = Rng::randu_mat(num_random_variables, num_random_variables);
+      similarity_matrix = Rng::randu_mat(num_random_variables, num_random_variables);
       // make symmetric
-      for(int i = 0; i < MI.rows(); i++) {
-        for(int j = i+1; j < MI.cols(); j++) {
-          MI(j,i) = MI(i,j);
+      for(int i = 0; i < similarity_matrix.rows(); i++) {
+        for(int j = i+1; j < similarity_matrix.cols(); j++) {
+          similarity_matrix(j,i) = similarity_matrix(i,j);
         }
-        MI(i,i) = 1.0;
+        similarity_matrix(i,i) = 1.0;
       }
     }
-    else
+    else if (g::linkage_strategy == g::linkage_strategy_types::node_proximity)
+    {
+      similarity_matrix = compute_tree_distance(population[0], num_random_variables);
+      similarity_matrix = similarity_matrix.cwiseInverse();
+      for(int i = 0; i < similarity_matrix.rows(); i++) {
+        similarity_matrix(i, i) = 0.0;
+      }
+    }
+    else // linkage_strategy == mutual_info
     {
       // discretize population symbols for speed
       auto discrpop_n_numsymb = discretize_population_symbols(population, num_random_variables);
       auto discr_pop = discrpop_n_numsymb.first;
       int num_symbs = discrpop_n_numsymb.second;
       // estimate MI
-      MI = compute_MI(discr_pop, num_symbs, num_random_variables);
+      similarity_matrix = compute_MI(discr_pop, num_symbs, num_random_variables);
     }
 
-    vector<vector<int>> fos = fast_upgma(MI);
+    vector<vector<int>> fos = fast_upgma(similarity_matrix);
     // remove the root to avoid complete replacements
     fos.pop_back();
 
@@ -279,6 +287,65 @@ struct FOSBuilder
       }
     }
     return MI;
+  }
+
+  Mat compute_tree_distance(Node * representative, int num_random_variables) {
+    // Returns a matrix D where D(i,j) = number of edges between node i and node j
+    // Nodes are indexed by their pre-order traversal position
+    // Diagonal is 0
+
+    vector<Node*> nodes = representative->subtree();
+    assert((int)nodes.size() == num_random_variables);
+
+    // Build a map from Node* to pre-order index
+    unordered_map<Node*, int> node_to_idx;
+    node_to_idx.reserve(num_random_variables);
+    for (int i = 0; i < num_random_variables; i++) {
+      node_to_idx[nodes[i]] = i;
+    }
+
+    // Compute depth of each node (relative to the subtree root)
+    int root_depth = nodes[0]->depth();
+    vector<int> depth(num_random_variables);
+    for (int i = 0; i < num_random_variables; i++) {
+      depth[i] = nodes[i]->depth() - root_depth;
+    }
+
+    // Build parent index array within the subtree
+    // parent_idx[i] = pre-order index of parent of node i, or -1 for root
+    vector<int> parent_idx(num_random_variables, -1);
+    for (int i = 1; i < num_random_variables; i++) {
+      auto it = node_to_idx.find(nodes[i]->parent);
+      if (it != node_to_idx.end()) {
+        parent_idx[i] = it->second;
+      }
+    }
+
+    // Compute pairwise distances using LCA
+    // For each pair (i,j), walk both nodes up to their LCA
+    // dist(i,j) = depth[i] + depth[j] - 2 * depth[LCA(i,j)]
+    Mat D = Mat::Zero(num_random_variables, num_random_variables);
+
+    for (int i = 0; i < num_random_variables; i++) {
+      for (int j = i + 1; j < num_random_variables; j++) {
+        // Find LCA by walking up from both nodes
+        int a = i, b = j;
+        // Bring a and b to the same depth
+        while (depth[a] > depth[b]) a = parent_idx[a];
+        while (depth[b] > depth[a]) b = parent_idx[b];
+        // Walk both up until they meet
+        while (a != b) {
+          a = parent_idx[a];
+          b = parent_idx[b];
+        }
+        int lca_depth = depth[a];
+        float dist = (float)(depth[i] + depth[j] - 2 * lca_depth);
+        D(i, j) = dist;
+        D(j, i) = dist;
+      }
+    }
+
+    return D;
   }
 
   vector<vector<int>> fast_upgma(Mat &S)
