@@ -29,8 +29,8 @@ class GPGRegressor(BaseEstimator, RegressorMixin):
     kwargs = self.get_params()
     s = ""
     for k in kwargs:
-      # skip python-only params
-      if k in ["finetune", "model", "finetune_max_evals"]:
+      # skip python-only params and internal sklearn/class attributes
+      if k in ["finetune", "model", "finetune_max_evals"] or k.startswith("_"):
         continue
 
       # handle bool flags for c++ 

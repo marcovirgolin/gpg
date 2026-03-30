@@ -12,7 +12,7 @@ If it terminates prematurely, the number of steps used is returned as well.
 def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100, 
   tol_grad=1e-9, tol_change=1e-9):
   
-  best_torch_model, best_loss = None, np.infty
+  best_torch_model, best_loss = None, np.inf
 
   if not isinstance(X, torch.TensorType):
       X = torch.tensor(X)
@@ -50,7 +50,7 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
   except ValueError:
     return sympy_model, 0
 
-  prev_loss = np.infty
+  prev_loss = np.inf
   batch_x = x_args
   batch_y = y
   steps_done = 0
