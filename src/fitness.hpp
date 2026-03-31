@@ -94,7 +94,7 @@ struct Fitness {
     // else pick some random elements
     auto chosen = Rng::rand_perm(n);
     chosen.resize(num_observations);
-    this->X_batch = X_train(chosen, Eigen::all);
+    this->X_batch = X_train(chosen, Eigen::indexing::all);
     this->y_batch = y_train(chosen);
     return true;
   }

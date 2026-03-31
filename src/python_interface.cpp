@@ -14,13 +14,13 @@ py::list evolve(string options, myeig::Mat &X, myeig::Vec &y) {
   // 1. SETUP
   auto opts = split_string(options, " ");
   int argc = opts.size()+1;
-  char * argv[argc];
+  vector<char *> argv(argc);
   string title = "gpg";
-  argv[0] = (char*) title.c_str();
+  argv[0] = const_cast<char *>(title.c_str());
   for (int i = 1; i < argc; i++) {
-    argv[i] = (char*) opts[i-1].c_str();
+    argv[i] = const_cast<char *>(opts[i-1].c_str());
   }
-  g::read_options(argc, argv);
+  g::read_options(argc, argv.data());
 
   // initialize evolution handler 
   IMS * ims = new IMS();

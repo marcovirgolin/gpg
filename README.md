@@ -1,21 +1,43 @@
 # gpg
+
 Re-implementation of GP-GOMEA (Python scikit-learn-compatible interface, C++ backend).
 This version of the code features only GP-GOMEA and no other algorithms (differently from the [previous repo](https://github.com/marcovirgolin/GP-GOMEA)) and focuses on symbolic regression alone.
 Also, this version uses dependencies that are easier and less finicky to install (see [environment.yml](environment.yml)).
 
 ## Installation
-Installation requires [git](https://github.com/git-guides/install-git) and [conda](https://www.anaconda.com/download).
+
+Installation requires [git](https://github.com/git-guides/install-git) and either [uv](https://docs.astral.sh/uv/) or [conda](https://www.anaconda.com/download).
 Run the following bash commands from a folder of your choice:
+
 ```bash
 git clone https://github.com/marcovirgolin/gpg.git
 cd gpg
-conda env create -f environment.yml
-conda activate gpg
-make
+uv sync
 ```
 
+The repository includes a committed [uv.lock](uv.lock) file so dependency resolution is reproducible across machines.
+
+If you prefer Conda for the C++ and Python toolchain setup, create the environment from [environment.yml](environment.yml) and then run `uv sync` or `python -m pip install --no-build-isolation -e .` inside that environment.
+
+If you only want the native targets without installing the Python package, use `make release` or `make debug`.
+
+## Development Workflow
+
+Use the following commands for the common local workflow:
+
+```bash
+make sync       # install/update the uv-managed environment
+make lock       # refresh uv.lock after dependency changes
+make smoke      # run the main example script through uv
+make smoke-min  # run a minimal fit/predict smoke test
+```
+
+`make sync` uses `uv sync --reinstall-package pygpg` so local Python source changes are propagated even though the native editable build installs package files into `.venv/site-packages`.
+
 ## Usage
+
 You can try `gpg` out with the following code snippet (or simply run `try.py` if you like):
+
 ```python
 import numpy as np
 from pygpg.sk import GPGRegressor
@@ -60,8 +82,10 @@ print("Test\t\tR2: {}\t\tMSE: {}".format(
 ```
 
 ## Differences w.r.t. previous version
+
 This version has some differences compared to the code in the [previous repo](https://github.com/marcovirgolin/GP-GOMEA).
 Here's a list:
+
 - Protected operators are not used here (expressions that evaluate to NaN for some training points are assigned a worst-case fitness `INF`)
 - Functions/variables/constants can be sampled with custom probabilities (by default, uniform with binary operators twice as likely as unary operators)
 - Tournament selection can be used to speed up convergence within GOM.
@@ -73,17 +97,18 @@ Here's a list:
 - The scikit-learn interface includes imputation in case of incomplete data
 - The scikit-learn interface includes coefficient fine-tuning with `sympy-torch` and L-BFGS
 
-
 ## Results on SRBench
+
 Running this version on SRBench (`gpg`) leads to expressions that are as compact but more accurate than those of the original `GP-GOMEA`, in much less time!
 
 <img src=pics/srbench.png alt="blackbox_results" width=800px />
 <img src=pics/srbench_harmonic.png alt="harmonic_means" width=800px />
 
-
 ## Research
+
 If you use our code for academic purposes, please support our research by citing:
-```
+
+```bibtex
 @article{virgolin2021improving,
   title={Improving model-based genetic programming for symbolic regression of small expressions},
   author={Virgolin, Marco and Alderliesten, Tanja and Witteveen, Cees and Bosman, Peter A. N.},
@@ -97,5 +122,6 @@ If you use our code for academic purposes, please support our research by citing
 ```
 
 ## Branches
+
 - `swig` and `pybind` are the same, with the exception that the first uses SWIG and the second uses pybind to realize the python interface. `pybind` is now default and, probably, `swig` will no longer be supported/updated.
 - `vector_repr` represents an expression as a vector of strings instead of a tree of nodes. This version may be slightly faster (matters only when the number of observations in the data set is relatively small). However it needs to be [fixed](https://github.com/marcovirgolin/gpg/issues/10).
