@@ -5,12 +5,14 @@ import sympy
 from copy import deepcopy
 import re
 
-"""
-Fine-tunes a sympy model. Returns the fine-tuned model and the number of steps used.
-If it terminates prematurely, the number of steps used is returned as well.
-"""
-def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100, 
-  tol_grad=1e-9, tol_change=1e-9):
+
+def finetune(
+    sympy_model, X, y, learning_rate=1.0, n_steps=100, tol_grad=1e-9, tol_change=1e-9
+):
+    """
+    Fine-tunes a sympy model. Returns the fine-tuned model and the number of steps used.
+    If it terminates prematurely, the number of steps used is returned as well.
+    """
 
     best_torch_model, best_loss = None, np.inf
 
@@ -28,14 +30,16 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
             str_model = str_model.replace(str(f), str(f + np.random.normal(0, 1e-5)), 1)
     sympy_model = sympy.sympify(str_model)
 
-    expr_vars = set(re.findall(r'\bx_[0-9]+', str(sympy_model)))
+    expr_vars = set(re.findall(r"\bx_[0-9]+", str(sympy_model)))
     try:
         torch_model = C.sympy_to_torch(sympy_model, timeout=5)
     except TypeError:
         print("[!] Warning: invalid conversion from sympy to torch pre fine-tuning")
         return sympy_model, 0
     if torch_model is None:
-        print("[!] Warning: failed to convert from sympy to torch within a reasonable time")
+        print(
+            "[!] Warning: failed to convert from sympy to torch within a reasonable time"
+        )
         return sympy_model, 0
 
     x_args = {x: X[:, int(x.lstrip("x_"))] for x in expr_vars}
@@ -61,7 +65,9 @@ def finetune(sympy_model, X, y, learning_rate=1.0, n_steps=100,
         try:
             p = torch_model(**batch_x).squeeze(-1)
         except TypeError:
-            print("[!] Warning: error during forward call of torch model while fine-tuning")
+            print(
+                "[!] Warning: error during forward call of torch model while fine-tuning"
+            )
             return sympy_model, steps_done
         loss = (p - batch_y).pow(2).mean().div(2)
         loss.retain_grad()
